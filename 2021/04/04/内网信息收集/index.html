@@ -1,0 +1,331 @@
+<!DOCTYPE html><html lang="zh-CN/zn" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>内网信息收集 | 秋兮成風</title><meta name="description" content="常规工作组渗透【信息收集】针对本机的各类信息收集基础信息收集确认当前权限是否需要提权  network server iis应用池提权 administrator system root  检查当前机器状态运行时长  主要为了据此大致判断目标管理员平时的管理习惯  了解当前机器的大致配置信息  是否为虚拟机 打了多少补丁 详细系统版本式多少2003&#x2F;xp以下的版本2008-2012之间的版本201"><meta name="keywords" content="ATT&amp;CK"><meta name="author" content="秋兮成風"><meta name="copyright" content="秋兮成風"><meta name="format-detection" content="telephone=no"><link rel="shortcut icon" href="/img/tubiao.png"><link rel="canonical" href="http://yoursite.com/2021/04/04/%E5%86%85%E7%BD%91%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86/"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//fonts.googleapis.com" crossorigin="crossorigin"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta property="og:type" content="article"><meta property="og:title" content="内网信息收集"><meta property="og:url" content="http://yoursite.com/2021/04/04/%E5%86%85%E7%BD%91%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86/"><meta property="og:site_name" content="秋兮成風"><meta property="og:description" content="常规工作组渗透【信息收集】针对本机的各类信息收集基础信息收集确认当前权限是否需要提权  network server iis应用池提权 administrator system root  检查当前机器状态运行时长  主要为了据此大致判断目标管理员平时的管理习惯  了解当前机器的大致配置信息  是否为虚拟机 打了多少补丁 详细系统版本式多少2003&#x2F;xp以下的版本2008-2012之间的版本201"><meta property="og:image" content="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg"><meta property="article:published_time" content="2021-04-04T07:43:05.000Z"><meta property="article:modified_time" content="2021-04-04T11:16:09.153Z"><meta name="twitter:card" content="summary"><script>var activateDarkMode = function () {
+  document.documentElement.setAttribute('data-theme', 'dark')
+  if (document.querySelector('meta[name="theme-color"]') !== null) {
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000')
+  }
+}
+var activateLightMode = function () {
+  document.documentElement.setAttribute('data-theme', 'light')
+  if (document.querySelector('meta[name="theme-color"]') !== null) {
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#fff')
+  }
+}
+
+var getCookies = function (name) {
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) return parts.pop().split(';').shift()
+}
+
+var autoChangeMode = 'false'
+var t = getCookies('theme')
+if (autoChangeMode === '1') {
+  var isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+  var isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+  var isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+  var hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+  if (t === undefined) {
+    if (isLightMode) activateLightMode()
+    else if (isDarkMode) activateDarkMode()
+    else if (isNotSpecified || hasNoSupport) {
+      console.log('You specified no preference for a color scheme or your browser does not support it. I Schedule dark mode during night time.')
+      var now = new Date()
+      var hour = now.getHours()
+      var isNight = hour <= 6 || hour >= 18
+      isNight ? activateDarkMode() : activateLightMode()
+    }
+    window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+      if (Cookies.get('theme') === undefined) {
+        e.matches ? activateDarkMode() : activateLightMode()
+      }
+    })
+  } else if (t === 'light') activateLightMode()
+  else activateDarkMode()
+} else if (autoChangeMode === '2') {
+  now = new Date()
+  hour = now.getHours()
+  isNight = hour <= 6 || hour >= 18
+  if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+  else if (t === 'light') activateLightMode()
+  else activateDarkMode()
+} else {
+  if (t === 'dark') activateDarkMode()
+  else if (t === 'light') activateLightMode()
+}</script><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css"><link rel="prev" title="SSRF" href="http://yoursite.com/2021/04/18/SSRF/"><link rel="next" title="web安全整理" href="http://yoursite.com/2021/04/03/web%E5%AE%89%E5%85%A8%E6%95%B4%E7%90%86/"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Titillium+Web&amp;display=swap"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  bookmark: {
+    message_prev: 'Press',
+    message_next: 'to bookmark this page'
+  },
+  runtime_unit: 'days',
+  runtime: false,
+  copyright: undefined,
+  ClickShowText: undefined,
+  medium_zoom: false,
+  fancybox: true,
+  Snackbar: undefined,
+  justifiedGallery: {
+    js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+    css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+  },
+  baiduPush: false,
+  highlightCopy: true,
+  highlightLang: true,
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isanchor: false    
+}</script><script>var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: undefined,
+  isSidebar: true
+  }</script><noscript><style>
+#nav {
+  opacity: 1
+}
+.justified-gallery img{
+  opacity: 1
+}
+</style></noscript><meta name="generator" content="Hexo 4.2.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">Loading...</div></div></div><div id="mobile-sidebar"><div id="menu_mask"></div><div id="mobile-sidebar-menus"><div class="mobile_author_icon"><img class="avatar-img" src="/img/touxiang.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="mobile_post_data"><div class="mobile_data_item is-center"><div class="mobile_data_link"><a href="/archives/"><div class="headline">Articles</div><div class="length_num">11</div></a></div></div><div class="mobile_data_item is-center">      <div class="mobile_data_link"><a href="/tags/"><div class="headline">Tags</div><div class="length_num">7</div></a></div></div><div class="mobile_data_item is-center">     <div class="mobile_data_link"><a href="/categories/"><div class="headline">Categories</div><div class="length_num">2</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page"><i class="fa-fw fas fa-list"></i><span> 清单</span><i class="fas fa-chevron-down menus-expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><i class="fas fa-arrow-right on" id="toggle-sidebar"></i><div id="sidebar"><div class="sidebar-toc"><div class="sidebar-toc__title">Catalog</div><div class="sidebar-toc__progress"><span class="progress-notice">You've read</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar">     </div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#常规工作组渗透【信息收集】"><span class="toc-number">1.</span> <span class="toc-text">常规工作组渗透【信息收集】</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#针对本机的各类信息收集"><span class="toc-number">1.1.</span> <span class="toc-text">针对本机的各类信息收集</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#基础信息收集"><span class="toc-number">1.1.1.</span> <span class="toc-text">基础信息收集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#进程信息"><span class="toc-number">1.1.2.</span> <span class="toc-text">进程信息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#各类密码搜集技巧"><span class="toc-number">1.1.3.</span> <span class="toc-text">各类密码搜集技巧</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#内网环境初步分析"><span class="toc-number">1.2.</span> <span class="toc-text">内网环境初步分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#基础内网环境判断"><span class="toc-number">1.2.1.</span> <span class="toc-text">基础内网环境判断</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#内网端口安全扫描"><span class="toc-number">1.2.2.</span> <span class="toc-text">内网端口安全扫描</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#文件共享服务默认端口"><span class="toc-number">1.2.3.</span> <span class="toc-text">文件共享服务默认端口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#各类基础web服务默认端口"><span class="toc-number">1.2.4.</span> <span class="toc-text">各类基础web服务默认端口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#数据库默认端口"><span class="toc-number">1.2.5.</span> <span class="toc-text">数据库默认端口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#用于Windows横向渗透的默认端口"><span class="toc-number">1.2.6.</span> <span class="toc-text">用于Windows横向渗透的默认端口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#各种远程管理类服务默认端口"><span class="toc-number">1.2.7.</span> <span class="toc-text">各种远程管理类服务默认端口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#VPN服务默认端口"><span class="toc-number">1.2.8.</span> <span class="toc-text">VPN服务默认端口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#mail默认端口"><span class="toc-number">1.2.9.</span> <span class="toc-text">mail默认端口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#借助smb-，快速探测内网所有Windows主机"><span class="toc-number">1.2.10.</span> <span class="toc-text">借助smb ，快速探测内网所有Windows主机</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#msf中的探测模块"><span class="toc-number">1.2.11.</span> <span class="toc-text">msf中的探测模块</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#内网“跨平台”文件互传"><span class="toc-number">1.3.</span> <span class="toc-text">内网“跨平台”文件互传</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Linux平台"><span class="toc-number">1.3.1.</span> <span class="toc-text">Linux平台</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#跨平台文件互传"><span class="toc-number">1.3.2.</span> <span class="toc-text">跨平台文件互传</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Windows平台"><span class="toc-number">1.3.3.</span> <span class="toc-text">Windows平台</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#域渗透【单域】"><span class="toc-number">2.</span> <span class="toc-text">域渗透【单域】</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#域内信息收集"><span class="toc-number">2.1.</span> <span class="toc-text">域内信息收集</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#利用spn在目标域内进行精准探测"><span class="toc-number">2.1.1.</span> <span class="toc-text">利用spn在目标域内进行精准探测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#初步定位域管用户有哪些"><span class="toc-number">2.1.2.</span> <span class="toc-text">初步定位域管用户有哪些</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#域控机器是哪几台"><span class="toc-number">2.1.3.</span> <span class="toc-text">域控机器是哪几台</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#域内需要重点关注的关键组"><span class="toc-number">2.1.4.</span> <span class="toc-text">域内需要重点关注的关键组</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#搞清不同域之间的信任关系"><span class="toc-number">2.1.5.</span> <span class="toc-text">搞清不同域之间的信任关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#当前域所苦啊内网段有哪些"><span class="toc-number">2.1.6.</span> <span class="toc-text">当前域所苦啊内网段有哪些</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#绘制域内关系动态画像"><span class="toc-number">2.2.</span> <span class="toc-text">绘制域内关系动态画像</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#尝试获取域管密码的一些常规方式"><span class="toc-number">2.3.</span> <span class="toc-text">尝试获取域管密码的一些常规方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#离线、在线-完整导出域内用户数据"><span class="toc-number">2.4.</span> <span class="toc-text">离线、在线 完整导出域内用户数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#域管权限维持基础"><span class="toc-number">2.5.</span> <span class="toc-text">域管权限维持基础</span></a></li></ol></li></ol></div></div></div><div id="body-wrap"><div id="web_bg" data-type="photo"></div><header class="post-bg" id="page-header" style="background-image: url(https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg)"><nav id="nav"><span class="pull-left" id="blog_name"><a class="blog_title" id="site-name" href="/">秋兮成風</a></span><span class="pull-right menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page"><i class="fa-fw fas fa-list"></i><span> 清单</span><i class="fas fa-chevron-down menus-expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><span class="toggle-menu close"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></span></span></nav><div id="post-info"><div id="post-title"><div class="posttitle">内网信息收集</div></div><div id="post-meta"><div class="meta-firstline"><time class="post-meta__date"><span class="post-meta__date-created" title="Created 2021-04-04 15:43:05"><i class="far fa-calendar-alt fa-fw"></i> Created 2021-04-04</span><span class="post-meta__separator">|</span><span class="post-meta__date-updated" title="Updated 2021-04-04 19:16:09"><i class="fas fa-history fa-fw"></i> Updated 2021-04-04</span></time><span class="post-meta__categories"><span class="post-meta__separator">|</span><i class="fas fa-inbox fa-fw post-meta__icon"></i><a class="post-meta__categories" href="/categories/%E5%86%85%E7%BD%91/">内网</a></span></div><div class="meta-secondline"> </div><div class="meta-thirdline"><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta__icon"></i><span>Post View:</span><span id="busuanzi_value_page_pv"></span></span><span class="post-meta-commentcount"></span></div></div></div></header><main class="layout_post" id="content-inner"><article id="post"><div class="post-content" id="article-container"><h1 id="常规工作组渗透【信息收集】"><a href="#常规工作组渗透【信息收集】" class="headerlink" title="常规工作组渗透【信息收集】"></a>常规工作组渗透【信息收集】</h1><h2 id="针对本机的各类信息收集"><a href="#针对本机的各类信息收集" class="headerlink" title="针对本机的各类信息收集"></a>针对本机的各类信息收集</h2><h3 id="基础信息收集"><a href="#基础信息收集" class="headerlink" title="基础信息收集"></a>基础信息收集</h3><p><strong>确认当前权限</strong><br>是否需要提权</p>
+<ul>
+<li>network server</li>
+<li>iis应用池提权</li>
+<li>administrator</li>
+<li>system</li>
+<li>root</li>
+</ul>
+<p><strong>检查当前机器状态</strong><br>运行时长</p>
+<ul>
+<li>主要为了据此大致判断目标管理员平时的管理习惯</li>
+</ul>
+<p>了解当前机器的大致配置信息</p>
+<ul>
+<li>是否为虚拟机</li>
+<li>打了多少补丁</li>
+<li>详细系统版本式多少<br>2003/xp以下的版本<br>2008-2012之间的版本<br>2012之后的版本</li>
+</ul>
+<p><strong>不同的系统版本自带的工具有所不同，针对某些特性的利用上也有差别</strong></p>
+<ul>
+<li>防火墙是否开启</li>
+<li>机器的默认共享有哪些</li>
+<li>等等等……</li>
+</ul>
+<p><strong>本地管理员用户列表</strong><br>确认当前机器是否需要提权</p>
+<h3 id="进程信息"><a href="#进程信息" class="headerlink" title="进程信息"></a>进程信息</h3><p><strong>获取当前机器的详细进程列表</strong><br>用的什么杀软，具体式哪种类型和那个版本</p>
+<ul>
+<li>ESET 企业套装</li>
+<li>趋势企业套装</li>
+<li>卡巴企业套装</li>
+<li>赛门铁克企业套装</li>
+<li>McAfee企业套装</li>
+<li>360、火绒、defender 等等</li>
+<li><strong>针对行免杀</strong></li>
+</ul>
+<p><strong>检查有无各种常规监控以及各类入侵检测的agent端</strong></p>
+<ul>
+<li>bit9、zabbix、nagios<br>在内网每台机器上一般都装有对应的agent端</li>
+<li>cacti<br>非agent搜集。使用snmp</li>
+<li>等等……</li>
+</ul>
+<p><strong>获取当前机器已安装软件的详细列表</strong><br>服务端</p>
+<ul>
+<li>找可劫持的dll</li>
+<li>抓各种密码</li>
+<li>关于内网team viewer的深度利用</li>
+<li>等等…..</li>
+</ul>
+<p>个人机</p>
+<ul>
+<li>用的什么邮件客户端，详细版本是多少</li>
+<li>用什么VPN客户端，安装目录在哪里</li>
+<li>用的哪些即使通信聊天工具<br>实时截屏查看聊天信息</li>
+<li>有无office套件，详细版本是多少<br>后期可考虑用来留后门[但不建议这么干]</li>
+<li>等等……</li>
+</ul>
+<p><strong>获取当前机器的所有计划任务列表</strong><br>看看里面有无同行的马</p>
+<h3 id="各类密码搜集技巧"><a href="#各类密码搜集技巧" class="headerlink" title="各类密码搜集技巧"></a>各类密码搜集技巧</h3><p><strong>搜集当前系统用户 铭文密码及hash</strong><br>前提需要拥有目标系统管理权限</p>
+<ul>
+<li>通过常规系统提权利用技巧</li>
+</ul>
+<p>尝试 dump lsass.exe进程数据拖到本地解密</p>
+<ul>
+<li>会遇到新版本卡巴进程保护的问题</li>
+</ul>
+<p>从sam中提取本地用户密码hash</p>
+<ul>
+<li>ntlm hash破解</li>
+<li>sha系列 hash破解【内核版本新旧，加密算法也不同】</li>
+</ul>
+<p><strong>尝试解密保存在本地的所有 rdp连接密码</strong><br>需要拥有管理员权限<br>首先，获取当前机器中的所有rdp连接记录<br>确认相应目录下是否存在相应的Credentials文件<br>自行免杀mimikatz 尝试解密保存的rdp明文密码<br><a href="https://www.cnblogs.com/Mikasa-Ackerman/p/huo-quWindows-yuan-cheng-zhuo-mian-RDP-lian-jie-ji.html" target="_blank" rel="noopener">查找RDP连接记录</a></p>
+<p><strong>尝试解密各类Windows ssh 客户端密码</strong><br>需要管理员权限<br>SeureCRT</p>
+<ul>
+<li>拖整个配置文件目录到本地<br>会遇到配置加密问题</li>
+</ul>
+<p>xshell</p>
+<ul>
+<li>托整个配置文件目录到本地</li>
+</ul>
+<p>putty<br>-真正运维很少用，非专业个人机居多</p>
+<p>从命令历史记录的log文件中搜集各类铭文密码</p>
+<p><strong>从各类基础服务配置文件搜集明文密码</strong><br>通常情况下无需管理员权限，保证对配置文件可读即可<br>rsync、redis、各类Windows ftp 软件、http基础认证配置文件中保存的密码</p>
+<p><strong>搜集各类数据库中保存的明文密码机hash</strong><br>无需系统管理员，但需要数据库管理员权限<br>msssql、MySQL、Oracle、db2、postgresql、ldap（金矿）</p>
+<p><strong>抓取各类常用软件中的明文密码</strong><br>以下大部分操作需要管理员权限<br>浏览器中各类网站的登陆密码</p>
+<ul>
+<li>此项很重要，运气好可以借助内网机器拿到相应站点的外网站点权限</li>
+</ul>
+<p>读取navicat中保存的各类数据库连接密码</p>
+<p>读取各类邮件客户端中保存的密码</p>
+<p>各类win svn客户端连接密码</p>
+<p>各类Windows ftp客户端连接工具中保存的密码</p>
+<p><strong>解密系统密码管理器中保存的密码</strong><br>需要系统管理权限<br>可借助免杀好的mimikatz进行</p>
+<p><strong>搜集本机的各类VPN登陆凭证</strong><br>需要管理员权限</p>
+<ul>
+<li>借助免杀号的mimikatz解密保存的pptp密码</li>
+<li>openvpn登陆证书【可能会被加密】</li>
+</ul>
+<p><strong>搜集本机各类文件中的账号密码字段</strong><br>无需管理员权限<br>windows</p>
+<ul>
+<li>dir + findstr 指定路径下批量搜集密码</li>
+<li>.doc  .docx  .xls  .xlsx  .bak  .txt  里也有可能存在各种铭文密码</li>
+<li>回收站的各种密码</li>
+</ul>
+<p>Linux</p>
+<ul>
+<li>find + grep 指定路径下批量搜集密码</li>
+</ul>
+<p><strong>搜集注册表中保存的各种用户密码字段项值</strong><br>reg query 各种账号密码字段项值【默认十六进制】</p>
+<p><strong>抓取本机所有的无线连接记录及对应明文密码</strong><br>需要管理员权限<br>netsh wlan show profiles “无线名称” key=clear</p>
+<p>如何批量抓取本机所有的WiFi连接记录及对应的无线密码</p>
+<p><strong>汇总整理针对行弱口令字典</strong><br>根据以上方式搜集的各类密码，制作更加复合目标内网环境的账号密码字典</p>
+<p>分析目标管理员的密码设置规律【不一定都是有迹可循】</p>
+<p><strong>利用各类 传统键盘记录 来收集密码</strong><br>CS 或 MSF</p>
+<h2 id="内网环境初步分析"><a href="#内网环境初步分析" class="headerlink" title="内网环境初步分析"></a>内网环境初步分析</h2><h3 id="基础内网环境判断"><a href="#基础内网环境判断" class="headerlink" title="基础内网环境判断"></a>基础内网环境判断</h3><ul>
+<li>当前机器是否在域内</li>
+<li>IP、掩码、网关、dns、分别是多少</li>
+<li>当前机器能不能出网，出口IP式多少<br>出网刺探 ，先观察那些协议那些端口能正常出网</li>
+<li>当前机器的网络连接有哪些<br>尽量关注可直接提权以及能搜集到账号密码的端口<br>观察有无到达其他内网段的网络连接<br>有无各种监控和常规入侵检测的agent端口<br>看下有无同行的shell连接</li>
+</ul>
+<p><strong>各类VPN端口，后期维持入口用</strong></p>
+<ul>
+<li>观察arp缓存记录<br>看看有无新网段</li>
+<li>查看本机hosts文件<br>观察内网解析</li>
+<li>当前机器有无使用代理</li>
+<li>当前机器有无存活IP从连接</li>
+</ul>
+<h3 id="内网端口安全扫描"><a href="#内网端口安全扫描" class="headerlink" title="内网端口安全扫描"></a>内网端口安全扫描</h3><ul>
+<li>按照能够快速getshell的优先级尝试进行但端口扫描<br>严禁在强防护内网下一上来就漫无目的的尝试大规模批量端口扫描</li>
+<li>随机IP扫</li>
+<li>在每个扫描请求之间加上适当延迟【3-6不等】</li>
+<li>尽量用单线程跑【循环延迟即可】<br>一次只扫一个端口，即使这样扫一个C段实际上也不会太久，而且东京不会太大</li>
+<li>尝试模拟正常请求连接【telnet】</li>
+</ul>
+<p>尽量不要用各种公开工具暴力扫</p>
+<ul>
+<li>msf内置各种内网探测模块【可直接挂在socks下用，相对于其他工具靠谱一些】</li>
+<li>masscan、zmap<br>适合用来在公网上执行大规模批量端口扫描【无状态】，不适合用在内网</li>
+<li>nmap<br>适合把上面两种工具的扫描结果整理汇总，然后针对性的精细扫描</li>
+<li>powershell、py、msf、CS<br>效果会好点<h3 id="文件共享服务默认端口"><a href="#文件共享服务默认端口" class="headerlink" title="文件共享服务默认端口"></a>文件共享服务默认端口</h3></li>
+<li>ftp：21</li>
+<li>nfs：2049</li>
+<li>rsync：873</li>
+<li>Linux svn：3690</li>
+<li>Linux samba：tcp/udp 137 138 139</li>
+<li>尝试从各类共享文件中搜集各种铭文账号密码以及针对服务自身的漏洞和错误配置利用</li>
+</ul>
+<h3 id="各类基础web服务默认端口"><a href="#各类基础web服务默认端口" class="headerlink" title="各类基础web服务默认端口"></a>各类基础web服务默认端口</h3><p>通常为80-90 80880-8090【http】<br>            443、8443【https】<br>各类Java web中间件默认端口 7001【Java系列RCE利用】<br>主要针对各类基础web漏洞的利用</p>
+<h3 id="数据库默认端口"><a href="#数据库默认端口" class="headerlink" title="数据库默认端口"></a>数据库默认端口</h3><p>msssql：1433<br>ldap：389<br>redis：6379<br>mysql：3306<br>Oracle：1521<br>postgresql：5432<br>提权，快速横向扩展，搜集账号密码</p>
+<h3 id="用于Windows横向渗透的默认端口"><a href="#用于Windows横向渗透的默认端口" class="headerlink" title="用于Windows横向渗透的默认端口"></a>用于Windows横向渗透的默认端口</h3><p>smb：445<br>wmi：135<br>大部分的Windows内网自动化感染也都是基于此端口<br>winrm：5985、5986<br>rce，弱口令，多用于win内网中，快速横向扩展</p>
+<h3 id="各种远程管理类服务默认端口"><a href="#各种远程管理类服务默认端口" class="headerlink" title="各种远程管理类服务默认端口"></a>各种远程管理类服务默认端口</h3><p>rdp：3389<br>ssh：22<br>以上两个端口要数一蜜罐<br>vnc：5900<br>rdp系列热键后门尝试，ssh，自身漏洞利用，弱口令，隔离突破</p>
+<h3 id="VPN服务默认端口"><a href="#VPN服务默认端口" class="headerlink" title="VPN服务默认端口"></a>VPN服务默认端口</h3><p>443【VPN产品的默认web端口】<br>pptp：1723 可爆破<br>openvpn：1723 可爆破</p>
+<h3 id="mail默认端口"><a href="#mail默认端口" class="headerlink" title="mail默认端口"></a>mail默认端口</h3><p>pop3：110<br>smtp：25<br>imap：143<br>重点关注 传统owa【自身漏洞利用】，zimbra【自身漏洞利用，常用于Linux下】，IBM…<br>加密服务端口【非默认】</p>
+<h3 id="借助smb-，快速探测内网所有Windows主机"><a href="#借助smb-，快速探测内网所有Windows主机" class="headerlink" title="借助smb ，快速探测内网所有Windows主机"></a>借助smb ，快速探测内网所有Windows主机</h3><p>根据机器名命名规则快速定位到内网关键机器【有些机器命名会没有规则】<br>相对于TCP/UDP端口扫描，动静小，速度快<br>可协助跨到核心域机器</p>
+<h3 id="msf中的探测模块"><a href="#msf中的探测模块" class="headerlink" title="msf中的探测模块"></a>msf中的探测模块</h3><p>auxiliary/admin/oracle/oracle_login<br>auxiliary/scanner/mysql/mysql_login<br>auxiliary/scanner/mssql/mssql_login<br>auxiliary/scanner/postgres/postgres_login<br>auxiliary/scanner/winrm/winrm_login<br>auxiliary/scanner/redis/redis_login<br>………..<br>借助msf实现内网快速批量化口令测试【只针对某个单密码】</p>
+<h2 id="内网“跨平台”文件互传"><a href="#内网“跨平台”文件互传" class="headerlink" title="内网“跨平台”文件互传"></a>内网“跨平台”文件互传</h2><h3 id="Linux平台"><a href="#Linux平台" class="headerlink" title="Linux平台"></a>Linux平台</h3><ul>
+<li>ftp客户端【自带】</li>
+<li>wget</li>
+<li>curl</li>
+<li>nc【大多数自带】</li>
+<li>内网Linux机器间互传文件【scp……】</li>
+</ul>
+<h3 id="跨平台文件互传"><a href="#跨平台文件互传" class="headerlink" title="跨平台文件互传"></a>跨平台文件互传</h3><ul>
+<li>借助目标内网web目录中转</li>
+<li>借助目标内网的各类文件共享服务中转【ftp】</li>
+<li>Windows –&gt; linux = winscp[win10下会方便很多]<h3 id="Windows平台"><a href="#Windows平台" class="headerlink" title="Windows平台"></a>Windows平台</h3></li>
+</ul>
+<p><strong>内网Windows机器间文件互推【借助smb】</strong></p>
+<p><strong>从远程加载到本地</strong><br>bitsadmin、win自带ftp客户端、powershell、certutil、vbs脚本（这几个有些杀软会拦截）<br>wget and curl for Windows【非自带】</p>
+<ul>
+<li>主要为了解决某些杀软可能会拦截win自带的一些下载工具</li>
+</ul>
+<h1 id="域渗透【单域】"><a href="#域渗透【单域】" class="headerlink" title="域渗透【单域】"></a>域渗透【单域】</h1><h2 id="域内信息收集"><a href="#域内信息收集" class="headerlink" title="域内信息收集"></a>域内信息收集</h2><h3 id="利用spn在目标域内进行精准探测"><a href="#利用spn在目标域内进行精准探测" class="headerlink" title="利用spn在目标域内进行精准探测"></a>利用spn在目标域内进行精准探测</h3><ul>
+<li>需要具备的基础常识，深入了解Kerberos认证写一下的域内资源请求访问过程</li>
+<li>不同于常规 tcp/udp 端口扫描，由于spn本质就是正常的Kerberos请求，所以扫描才会显得非常隐蔽，目前针对此类扫描的检测也比较少</li>
+<li>MSSQLSvc【扫描域内所有mssql机器】<br>通常都是用在内网快速扩机器，运气爆棚的情况下说不定能直接抓到域管</li>
+<li>exchangMDB【扫描域内所有owa机器】<br>后期横向 、托邮件用</li>
+<li>TERMSERV【扫描域内所有开放了rdp的机器】<br>低版本Windows可尝试热键后门【shift后门】、高版本rdp后续可用来横向</li>
+<li>WSMAN【扫描域内所有开放了WSMan、WinRm、ps remoting的机器，此项可用于后期域内横向移动】</li>
+<li>扫描所有VPN机器【后期维持入口用】</li>
+<li>扫描域内所有DNS、 ldap机器【定位域控用】</li>
+<li>扫描域内所有ftp机器【翻文件、搜集信息、找密码】</li>
+<li>扫描域内所有web（http）机器【后期利用内网web抓域管</li>
+<li>扫描所有SMTP机器【找内网其他mail机器】</li>
+</ul>
+<p>定位到相应的机器名后，无比要先顺手ping下，看下机器当前到底在不在线<br>大部分win系统默认自带spn探测工具【setspn.exe】</p>
+<ul>
+<li>此操作无需管理员</li>
+<li>域内机器只要执行 <code>setspn -T 目标域名 -Q */*</code> 即可完整查出当前域内的所有spn<h3 id="初步定位域管用户有哪些"><a href="#初步定位域管用户有哪些" class="headerlink" title="初步定位域管用户有哪些"></a>初步定位域管用户有哪些</h3>后续绝大部分的精力都是围绕在抓这些用户的密码hash上，域渗透的核心之一，只不过有的域管用户可能是金庸状态<h3 id="域控机器是哪几台"><a href="#域控机器是哪几台" class="headerlink" title="域控机器是哪几台"></a>域控机器是哪几台</h3>直接查询dns记录会方便一些【只要当前机器的dns地址是域内IP即可】<br><code>nslookup -type=all _ldap._tcp.dc._msdcs.target.com</code></li>
+</ul>
+<p>另外一种方法是通过上面查出来的spn结果可以看到</p>
+<ul>
+<li>直接去里面找 OU=Domain Controllers 的所有机器即可</li>
+</ul>
+<p><code>net group &quot;domain controllers&quot; /domain</code> 此方法需要当前机器在域内</p>
+<p>扫描内网中同时开了389和53端口的机器【如果当前机器不再域中可借助此方法快速定位】</p>
+<p>定位主控【后续导ntds.dit用】</p>
+<h3 id="域内需要重点关注的关键组"><a href="#域内需要重点关注的关键组" class="headerlink" title="域内需要重点关注的关键组"></a>域内需要重点关注的关键组</h3><p>其它管理员组<br>技术人员组<br>财务人员组<br>人事人员组<br>目标boss所在组<br>以及其它的敏感组<br>后期在侥幸拿到域控后，可能要着重扩到这些人的机器去收集更多资料或者长期控制</p>
+<h3 id="搞清不同域之间的信任关系"><a href="#搞清不同域之间的信任关系" class="headerlink" title="搞清不同域之间的信任关系"></a>搞清不同域之间的信任关系</h3><p>这关乎到你能不能用一个目标域的账号密码登到另一个目标域中，包括域内的一些利用方式，都会稍有不同</p>
+<h3 id="当前域所苦啊内网段有哪些"><a href="#当前域所苦啊内网段有哪些" class="headerlink" title="当前域所苦啊内网段有哪些"></a>当前域所苦啊内网段有哪些</h3><p>如果网段间互通，有时候我们也可以通过网段来跨到不同的目标域中</p>
+<h2 id="绘制域内关系动态画像"><a href="#绘制域内关系动态画像" class="headerlink" title="绘制域内关系动态画像"></a>绘制域内关系动态画像</h2><p>导出域内数据库【ldap】离线分析目标域动态关系图</p>
+<ul>
+<li>BloodHound</li>
+</ul>
+<p>导出域内所有dns记录【dnscmd】</p>
+<p>导出owa登陆日志</p>
+<p>分析域内机器及域用户对应关系【Csvde LDIFDE】<br><strong>用于快速定位域内关键机器</strong></p>
+<h2 id="尝试获取域管密码的一些常规方式"><a href="#尝试获取域管密码的一些常规方式" class="headerlink" title="尝试获取域管密码的一些常规方式"></a>尝试获取域管密码的一些常规方式</h2><p>经典的MS14-068 kerberos协议漏洞【不多】<br>查找sysvol和组策略首选项中保存的密码【注意下KB2962486补丁的问题，也不多】<br>离线爆破指定五福访问票据【即对应的TGS】</p>
+<ul>
+<li>需要当前机器用户在目标域内</li>
+<li>需要运气和强大的GPU支持</li>
+<li>导出缓存文件后，再利用John转换成hashcat支持的散列格式进行爆破</li>
+</ul>
+<p><strong>借助各类基础服务漏洞挨个机器getshell，然后不停的抓明文密码、hash，直到抓到目标域管的明文密码或hash为止【经典的域渗透模式】</strong></p>
+<ul>
+<li>瞄准目标内网的各类数据库机器</li>
+<li>瞄准目标内网的各类web机器</li>
+<li>瞄准目标内网的各类文件共享机器</li>
+<li><strong>域管可能经常到这些机器上做些维护，难免会留下登陆缓存，相对更容易抓到域管密码</strong></li>
+<li>tasklist循环找域管进程【前提是本地administrator密码能在内网通杀才行，少见】</li>
+</ul>
+<p>想办法在目标内网一些关键机器植入传统键盘记录【监听域管密码】</p>
+<p>基于各种常规的密码收集工具【通过前面精心汇总的密码字典在内网smb批量扩散循环抓hash】</p>
+<p>Windows系列smb漏洞【不多】</p>
+<p>通过已控的目标内部邮箱借助多方社工拿到目标域管密码</p>
+<h2 id="离线、在线-完整导出域内用户数据"><a href="#离线、在线-完整导出域内用户数据" class="headerlink" title="离线、在线 完整导出域内用户数据"></a>离线、在线 完整导出域内用户数据</h2><p>ntdsutil<br>vshadow<br>diskshadow<br>基于volume shadow copy 服务所衍生出的其他各类域内hash导出技巧<br>dcsync同步<br><strong>主要是为了备份所有用户名，密码，hash，登陆记录….，留着后期扩展维持用</strong></p>
+<h2 id="域管权限维持基础"><a href="#域管权限维持基础" class="headerlink" title="域管权限维持基础"></a>域管权限维持基础</h2><p>黄金票据<br>ssp密码记录【mimilib.dll / mimidrv.sys驱动文件（用于绕过LSA保护）】<br>hookpasswordchange密码记录【注入lsass.exe进程，重启失效】<br>DSRM同步指定域用户密码<br>skeleton key “万能钥匙”【用于临时维持】<br>SID History<br>常规GPO【组策略】后门</p>
+</div><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="mailto:undefined">秋兮成風</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="http://yoursite.com/2021/04/04/%E5%86%85%E7%BD%91%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86/">http://yoursite.com/2021/04/04/%E5%86%85%E7%BD%91%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/ATT-CK/">ATT&amp;CK</a></div><div class="post_share"><div class="social-share" data-image="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css"/><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2021/04/18/SSRF/"><img class="prev-cover" data-src="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" onerror="onerror=null;src='/img/404.jpg'"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">SSRF</div></div></a></div><div class="next-post pull-right"><a href="/2021/04/03/web%E5%AE%89%E5%85%A8%E6%95%B4%E7%90%86/"><img class="next-cover" data-src="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" onerror="onerror=null;src='/img/404.jpg'"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">web安全整理</div></div></a></div></nav></article></main><footer id="footer" style="background-image: url(https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg)" data-type="photo"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2021 By 秋兮成風</div><div class="framework-info"><span>Driven </span><a href="https://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>Theme </span><a href="https://github.com/jerryc127/hexo-theme-butterfly" target="_blank" rel="noopener"><span>Butterfly</span></a></div></div></footer></div><section class="rightside" id="rightside"><div id="rightside-config-hide"><button id="readmode" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="font_plus" title="Increase Font Size"><i class="fas fa-plus"></i></button><button id="font_minus" title="Decrease Font Size"><i class="fas fa-minus"></i></button><button class="translate_chn_to_cht" id="translateLink" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button></div><div id="rightside-config-show"><button id="rightside_config" title="Setting"><i class="fas fa-cog"></i></button><button class="close" id="mobile-toc-button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" title="Back To Top"><i class="fas fa-arrow-up"></i></button></div></section><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="/js/third-party/activate-power-mode.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+document.body.addEventListener('input', POWERMODE);
+</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module" defer></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js" async></script><script src="/js/third-party/click_heart.js"></script><script>var endLoading = function () {
+  document.body.style.overflow = 'auto';
+  document.getElementById('loading-box').classList.add("loaded")
+}
+window.addEventListener('load',endLoading)</script></body></html>

